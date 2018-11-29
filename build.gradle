@@ -5,13 +5,59 @@ allprojects  {
     version = '1.0-SNAPSHOT'
 }
 
-    subprojects {
-        apply plugin: 'java'
+subprojects {
+    apply plugin: 'java'
 
-        sourceCompatibility = 1.8
-        targetCompatibility = 1.8
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
   
-        repositories {
-            mavenCentral()
+    repositories {
+        mavenCentral()
     }
+
+    task createPom << {
+        pom {
+            project {
+                parent {
+                    groupId project.group
+                    artifactId rootProject.name
+                    version project.version
+                    relativePath '../'
+                }
+                inceptionYear '2018'
+                licenses {
+                    license {
+                        name 'The Apache Software License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        distribution 'repo'
+                    }
+                }
+            }
+        }.writeTo("pom.xml")
+    }
+}
+ 
+task createPom << {
+    pom {
+        project {
+            packaging 'pom'
+            modules {
+                module 'protocol-api'
+                module 'protocol-common'
+                module 'protocol-ledger'
+                module 'protocol-tcp'
+                module 'webapp-common'
+                module 'webapp-cs'
+                module 'webapp-ev'
+            }
+            inceptionYear '2018'
+            licenses {
+                license {
+                    name 'The Apache Software License, Version 2.0'
+                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    distribution 'repo'
+                }
+            }
+        }
+    }.writeTo("pom.xml")
 }
