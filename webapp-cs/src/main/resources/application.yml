@@ -1,0 +1,17 @@
+spring:
+  main:
+    banner-mode: "OFF"
+  resources:
+    static-locations: "classpath:/app"
+
+logging:
+  level:
+    root: "INFO"
+    org.springframework.boot: "INFO"
+  config: "classpath:log-config.xml"
+
+server:
+  port: "8080"
+  servlet:
+    # https://www.baeldung.com/spring-boot-context-path
+    context-path: "/app"

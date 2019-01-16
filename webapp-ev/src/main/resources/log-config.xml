@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener"/>
+
+    <property name="APP" value="webapp"/>
+    <!-- or in Java with: System.setProperty("LOG_DIR", "log"); -->
+    <property name="LOG_DIR" value="log"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+            <charset>utf8</charset>
+        </encoder>
+    </appender>
+
+    <if condition='isDefined("LOG_FILE")'>
+        <then>
+            <appender name="FILE_INFO" class="ch.qos.logback.core.rolling.RollingFileAppender">
+                <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+                    <level>INFO</level>
+                </filter>
+
+                <file>${LOG_DIR}/${APP}.INFO.log</file>
+                <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+                    <pattern>${FILE_LOG_PATTERN}</pattern>
+                    <charset>utf8</charset>
+                </encoder>
+
+                <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+                    <fileNamePattern>${LOG_DIR}/archived/${APP}-%d{yyyy-MM-dd}.%i.INFO.log</fileNamePattern>
+                    <maxHistory>30</maxHistory>
+                    <totalSizeCap>100MB</totalSizeCap>
+                    <maxFileSize>10MB</maxFileSize>
+                </rollingPolicy>
+            </appender>
+
+            <appender name="FILE_DEBUG" class="ch.qos.logback.core.rolling.RollingFileAppender">
+                <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+                    <level>DEBUG</level>
+                </filter>
+
+                <file>${LOG_DIR}/${APP}.DEBUG.log</file>
+                <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+                    <pattern>${FILE_LOG_PATTERN}</pattern>
+                    <charset>utf8</charset>
+                </encoder>
+
+                <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+                    <fileNamePattern>${LOG_DIR}/archived/${APP}-%d{yyyy-MM-dd}.%i.DEBUG.log</fileNamePattern>
+                    <maxHistory>30</maxHistory>
+                    <totalSizeCap>400MB</totalSizeCap>
+                    <maxFileSize>10MB</maxFileSize>
+                </rollingPolicy>
+            </appender>
+        </then>
+    </if>
+
+    <root level="DEBUG">
+        <appender-ref ref="CONSOLE"/>
+
+        <if condition='isDefined("LOG_FILE")'>
+            <then>
+                <appender-ref ref="FILE_INFO"/>
+                <appender-ref ref="FILE_DEBUG"/>
+            </then>
+        </if>
+    </root>
+
+</configuration>
