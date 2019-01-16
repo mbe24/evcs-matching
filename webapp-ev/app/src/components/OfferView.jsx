@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import './OfferView.css';
 
 // https://react-bootstrap.netlify.com/components/table/
+// https://react-bootstrap.github.io/components/modal/
 
 class OfferView extends React.Component {
   render() {

@@ -24,7 +24,7 @@ public class RequestController {
                 .append("energy", request.energy)
                 .append("date", request.date)
                 .append("time", request.time)
-                .append("duration", request.duration)
+                .append("window", request.window)
                 .toString();
 
         logger.info("New request: " + s);

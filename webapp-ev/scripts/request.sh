@@ -16,7 +16,7 @@ cat <<EOF
     "energy": "$ARG_1",
     "date": "$ARG_2",
     "time": "$ARG_3",
-    "duration": "$ARG_4"
+    "window": "$ARG_4"
 }
 EOF
 }

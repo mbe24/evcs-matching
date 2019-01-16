@@ -2,6 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import './App.css';
 import { fetchTime, fetchTimePoll } from './actions/timeActions';
+import PageHeader from 'react-bootstrap/lib/PageHeader';
 import RequestForm from './components/RequestForm';
 import OfferView from './components/OfferView';
 
@@ -22,6 +23,7 @@ class App extends React.Component {
   render() {
     return (
       <div className="App container">
+        <PageHeader>EV Control</PageHeader>
         <RequestForm />
         <OfferView />
       </div>

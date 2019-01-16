@@ -7,5 +7,5 @@ public class EvRequest {
     public double energy;
     public LocalDate date;
     public LocalTime time;
-    public int duration;
+    public int window;
 }

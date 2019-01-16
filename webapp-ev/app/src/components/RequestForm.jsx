@@ -3,19 +3,23 @@ import { connect } from 'react-redux';
 import Button from 'react-bootstrap/lib/Button';
 import Form from 'react-bootstrap/lib/Form';
 import FormGroup from 'react-bootstrap/lib/FormGroup';
+import InputGroup from 'react-bootstrap/lib/InputGroup';
 import FormControl from 'react-bootstrap/lib/FormControl';
 import ControlLabel from 'react-bootstrap/lib/ControlLabel';
 import Col from 'react-bootstrap/lib/Col';
 import './RequestForm.css';
 
 function createDefaultRequest() {
-  let now = new Date();
-  return {
+  let date = new Date();
+  let now = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+
+  let request = {
     energy: 99.9,
     date: now.toISOString().substr(0, 10),
-    time: now.getHours() + ':' + now.getMinutes(),
-    duration: 2
+    time: now.toISOString().substr(11, 5),
+    window: 2
   };
+  return request;
 }
 
 class RequestForm extends React.Component {
@@ -24,7 +28,7 @@ class RequestForm extends React.Component {
 
     this.state = {
       isLoading: false,
-      ...createDefaultRequest(99.9)
+      ...createDefaultRequest()
     };
 
     this.handleChange = this.handleChange.bind(this);
@@ -39,12 +43,8 @@ class RequestForm extends React.Component {
     event.preventDefault();
     this.setState({ ...this.state, isLoading: true });
 
-    const request = {
-      energy: this.state.energy,
-      date: this.state.date,
-      time: this.state.time,
-      duration: this.state.duration
-    };
+    let request = Object.assign({}, this.state);
+    delete request.isLoading;
 
     fetch('/app/api/v1/request/create', {
       method: 'post',
@@ -63,7 +63,7 @@ class RequestForm extends React.Component {
 
     this.setState({
       ...this.state,
-      ...{ ...createDefaultRequest(0), energy: 0, duration: 0 }
+      ...{ ...createDefaultRequest(0), energy: 0, window: 0 }
     });
   }
 
@@ -77,13 +77,18 @@ class RequestForm extends React.Component {
               Energy
             </Col>
             <Col sm={9}>
-              <FormControl
-                autoFocus
-                type="number"
-                step="0.01"
-                value={this.state.energy}
-                onChange={this.handleChange}
-              />
+              <InputGroup>
+                <FormControl
+                  autoFocus
+                  type="number"
+                  step="0.01"
+                  value={this.state.energy}
+                  onChange={this.handleChange}
+                />
+                <InputGroup.Addon>
+                  <b>kWh</b>
+                </InputGroup.Addon>
+              </InputGroup>
             </Col>
           </FormGroup>
 
@@ -115,18 +120,23 @@ class RequestForm extends React.Component {
             </Col>
           </FormGroup>
 
-          <FormGroup controlId="duration" bsSize="small">
+          <FormGroup controlId="window" bsSize="small">
             <Col componentClass={ControlLabel} sm={3}>
-              Duration
+              Window
             </Col>
             <Col sm={9}>
-              <FormControl
-                autoFocus
-                type="number"
-                step="1"
-                value={this.state.duration}
-                onChange={this.handleChange}
-              />
+              <InputGroup>
+                <FormControl
+                  autoFocus
+                  type="number"
+                  step="1"
+                  value={this.state.window}
+                  onChange={this.handleChange}
+                />
+                <InputGroup.Addon>
+                  <b>h</b>
+                </InputGroup.Addon>
+              </InputGroup>
             </Col>
           </FormGroup>
 
