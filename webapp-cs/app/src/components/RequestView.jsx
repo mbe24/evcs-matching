@@ -87,28 +87,33 @@ class RequestView extends React.Component {
     return (
       <div className="TableView col-sm-6">
         <h3>Requests</h3>
-        <Table responsive striped hover>
-          <thead>
-            <tr>
-              <th className="text-center">ID</th>
-              <th className="text-center">Energy</th>
-              <th className="text-center">Date</th>
-              <th className="text-center">Time</th>
-              <th className="text-center">Window</th>
-            </tr>
-          </thead>
-          <tbody>{this.createTableEntries(this.state.items)}</tbody>
-        </Table>
 
-        <div className="pull-left">
-          <Button
-            bsStyle="primary"
-            bsSize="sm"
-            type="button"
-            onClick={this.handleLoad}
-          >
-            Load
-          </Button>
+        <div className="row">
+          <div className="pull-left">
+            <Button
+              bsStyle="primary"
+              bsSize="sm"
+              type="button"
+              onClick={this.handleLoad}
+            >
+              Load
+            </Button>
+          </div>
+        </div>
+
+        <div className="row">
+          <Table responsive striped hover>
+            <thead>
+              <tr>
+                <th className="text-center">ID</th>
+                <th className="text-center">Energy</th>
+                <th className="text-center">Date</th>
+                <th className="text-center">Time</th>
+                <th className="text-center">Window</th>
+              </tr>
+            </thead>
+            <tbody>{this.createTableEntries(this.state.items)}</tbody>
+          </Table>
         </div>
       </div>
     );
