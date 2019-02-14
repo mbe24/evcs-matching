@@ -5,6 +5,7 @@ import { fetchTime, fetchTimePoll } from './actions/timeActions';
 import PageHeader from 'react-bootstrap/lib/PageHeader';
 import RequestForm from './components/RequestForm';
 import OfferView from './components/OfferView';
+import TableView from './components/TableView';
 
 // or without decorator
 // see: https://blog.logrocket.com/react-redux-connect-when-and-how-to-use-it-f2a1edab2013
@@ -20,12 +21,18 @@ class App extends React.Component {
     //this.props.fetchTime();
   };
 
+  // TODO implement OfferView with techniques from TableView
   render() {
     return (
       <div className="App container">
         <PageHeader>EV Control</PageHeader>
-        <RequestForm />
-        <OfferView />
+        <div class="row">
+          <RequestForm />
+          <OfferView />
+        </div>
+        <div class="row">
+          <TableView />
+        </div>
       </div>
     );
   }

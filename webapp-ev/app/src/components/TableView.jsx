@@ -1,9 +1,9 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import ListGroup from 'react-bootstrap/lib/ListGroup';
-import ListGroupItem from 'react-bootstrap/lib/ListGroupItem';
-import './OfferView.css';
+import Table from 'react-bootstrap/lib/Table';
+import './TableView.css';
 
+// http://allenfang.github.io/react-bootstrap-table/index.html
 // https://react-bootstrap.netlify.com/components/table/
 // https://react-bootstrap.github.io/components/modal/
 
@@ -13,7 +13,7 @@ function* range(start, end) {
   }
 }
 
-class OfferView extends React.Component {
+class TableView extends React.Component {
   constructor(props) {
     super(props);
 
@@ -35,14 +35,16 @@ class OfferView extends React.Component {
     data.forEach(i => {
       let isActive = i.toString() === this.state.activeItem.toString();
       items.push(
-        <ListGroupItem
-          active={isActive}
+        <tr
+          class={isActive ? 'info' : ''}
           key={i}
           data-id={i}
           onClick={this.handleClick}
         >
-          Item {i}
-        </ListGroupItem>
+          <td>{i}</td>
+          <td>Item {i}</td>
+          <td>{isActive ? 'true' : 'false'}</td>
+        </tr>
       );
     });
     return items;
@@ -50,11 +52,18 @@ class OfferView extends React.Component {
 
   render() {
     return (
-      <div className="OfferView col-sm-6">
+      <div className="TableView col-sm-6">
         <h3>Offers</h3>
-        <ListGroup bsClass="list-group">
-          {this.createItems(this.state.data)}
-        </ListGroup>
+        <Table responsive striped hover>
+          <thead>
+            <tr>
+              <th class="text-center">#</th>
+              <th class="text-center">Name</th>
+              <th class="text-center">Active</th>
+            </tr>
+          </thead>
+          <tbody>{this.createItems(this.state.data)}</tbody>
+        </Table>
       </div>
     );
   }
@@ -63,4 +72,4 @@ class OfferView extends React.Component {
 export default connect(
   null,
   null
-)(OfferView);
+)(TableView);

@@ -1,9 +1,8 @@
 import * as ACTION from '../actions/actionTypes';
 
 const initialState = {
-  hour: '00',
-  minute: '00',
-  second: '00'
+  set: false,
+  request: {}
 };
 
 export default (state = initialState, action) => {

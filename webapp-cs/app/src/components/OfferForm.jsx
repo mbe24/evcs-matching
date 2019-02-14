@@ -7,46 +7,65 @@ import InputGroup from 'react-bootstrap/lib/InputGroup';
 import FormControl from 'react-bootstrap/lib/FormControl';
 import ControlLabel from 'react-bootstrap/lib/ControlLabel';
 import Col from 'react-bootstrap/lib/Col';
-import './RequestForm.css';
+import './OfferForm.css';
 
-function createDefaultRequest() {
+function createDefaultOffer() {
   let date = new Date();
   let now = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
 
-  let request = {
-    energy: 99.9,
+  let offer = {
+    id: 0,
+    price: 0.0,
+    energy: 0,
     date: now.toISOString().substr(0, 10),
     time: now.toISOString().substr(11, 5),
-    window: 2
+    window: 0
   };
-  return request;
+  return offer;
 }
 
-class RequestForm extends React.Component {
+class OfferForm extends React.Component {
   constructor(props) {
     super(props);
 
     this.state = {
       isLoading: false,
-      ...createDefaultRequest()
+      offer: createDefaultOffer(),
+      active: false
     };
 
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
   }
 
+  // TODO read price from server response
+  componentWillReceiveProps(nextProps) {
+    let offer = nextProps.request;
+    if (!nextProps.active) offer = createDefaultOffer();
+    else offer.price = Math.round(100 * offer.energy * 0.2) / 100;
+
+    this.setState({
+      ...this.state,
+      offer: offer,
+      active: nextProps.active
+    });
+  }
+
   handleChange(event) {
-    this.setState({ ...this.state, [event.target.id]: event.target.value });
+    this.setState({
+      ...this.state,
+      offer: { ...this.state.offer, [event.target.id]: event.target.value }
+    });
   }
 
   handleSubmit(event) {
     event.preventDefault();
     this.setState({ ...this.state, isLoading: true });
 
-    let request = Object.assign({}, this.state);
-    delete request.isLoading;
+    let request = Object.assign({}, this.state.offer);
 
-    fetch('/app/api/v1/request/create', {
+    // TODO move to actions, evaluate answer
+    fetch('/app/api/v1/offer/create', {
       method: 'post',
       headers: {
         'Content-Type': 'application/json'
@@ -60,18 +79,48 @@ class RequestForm extends React.Component {
         console.log('Error while posting request...');
         console.log(err);
       });
-
-    this.setState({
-      ...this.state,
-      ...{ ...createDefaultRequest(), energy: 0, window: 0 }
-    });
   }
 
   render() {
     return (
-      <div className="RequestForm col-sm-6">
-        <h3>Request</h3>
+      <div className="OfferForm col-sm-6">
+        <h3>Offer</h3>
         <Form horizontal onSubmit={this.handleSubmit}>
+          <FormGroup controlId="id" bsSize="small">
+            <Col componentClass={ControlLabel} sm={3}>
+              ID
+            </Col>
+            <Col sm={9}>
+              <FormControl
+                disabled
+                autoFocus
+                type="text"
+                value={this.state.offer.id}
+              />
+            </Col>
+          </FormGroup>
+
+          <FormGroup controlId="price" bsSize="small">
+            <Col componentClass={ControlLabel} sm={3}>
+              Price
+            </Col>
+            <Col sm={9}>
+              <InputGroup>
+                <FormControl
+                  disabled={!this.state.active}
+                  autoFocus
+                  type="number"
+                  step="0.01"
+                  value={this.state.offer.price}
+                  onChange={this.handleChange}
+                />
+                <InputGroup.Addon>
+                  <b>&euro;</b>
+                </InputGroup.Addon>
+              </InputGroup>
+            </Col>
+          </FormGroup>
+
           <FormGroup controlId="energy" bsSize="small">
             <Col componentClass={ControlLabel} sm={3}>
               Energy
@@ -79,11 +128,11 @@ class RequestForm extends React.Component {
             <Col sm={9}>
               <InputGroup>
                 <FormControl
+                  disabled={true}
                   autoFocus
                   type="number"
                   step="0.01"
-                  value={this.state.energy}
-                  onChange={this.handleChange}
+                  value={this.state.offer.energy}
                 />
                 <InputGroup.Addon>
                   <b>kWh</b>
@@ -98,9 +147,10 @@ class RequestForm extends React.Component {
             </Col>
             <Col sm={9}>
               <FormControl
+                disabled={!this.state.active}
                 autoFocus
                 type="date"
-                value={this.state.date}
+                value={this.state.offer.date}
                 onChange={this.handleChange}
               />
             </Col>
@@ -112,9 +162,10 @@ class RequestForm extends React.Component {
             </Col>
             <Col sm={9}>
               <FormControl
+                disabled={!this.state.active}
                 autoFocus
                 type="time"
-                value={this.state.time}
+                value={this.state.offer.time}
                 onChange={this.handleChange}
               />
             </Col>
@@ -127,14 +178,15 @@ class RequestForm extends React.Component {
             <Col sm={9}>
               <InputGroup>
                 <FormControl
+                  disabled={!this.state.active}
                   autoFocus
                   type="number"
                   step="1"
-                  value={this.state.window}
+                  placeholder={this.state.offer.window}
                   onChange={this.handleChange}
                 />
                 <InputGroup.Addon>
-                  <b>h</b>
+                  <b>min</b>
                 </InputGroup.Addon>
               </InputGroup>
             </Col>
@@ -143,10 +195,10 @@ class RequestForm extends React.Component {
           <FormGroup>
             <Col smOffset={3} sm={2}>
               <Button
+                disabled={!this.state.active || this.state.isLoading}
                 bsStyle="primary"
                 bsSize="sm"
                 type="submit"
-                disabled={this.state.isLoading}
                 onClick={!this.state.isLoading ? this.handleClick : null}
               >
                 Submit
@@ -159,7 +211,12 @@ class RequestForm extends React.Component {
   }
 }
 
+const mapStateToProps = state => ({
+  request: state.offerFormReducer.request,
+  active: state.offerFormReducer.active
+});
+
 export default connect(
-  null,
+  mapStateToProps,
   null
-)(RequestForm);
+)(OfferForm);

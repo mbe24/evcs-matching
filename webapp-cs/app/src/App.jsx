@@ -1,10 +1,12 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import './App.css';
-import Hour from './components/Hour';
-import Minute from './components/Minute';
-import Second from './components/Second';
+import PageHeader from 'react-bootstrap/lib/PageHeader';
 import { fetchTime, fetchTimePoll } from './actions/timeActions';
+import RequestView from './components/RequestView';
+import OfferForm from './components/OfferForm';
+import OfferView from './components/OfferView';
+import ReservationView from './components/ReservationView';
 
 // or without decorator
 // see: https://blog.logrocket.com/react-redux-connect-when-and-how-to-use-it-f2a1edab2013
@@ -13,23 +15,25 @@ import { fetchTime, fetchTimePoll } from './actions/timeActions';
 //})
 class App extends React.Component {
   componentWillMount() {
-    this.props.fetchTimePoll();
+    //this.props.fetchTimePoll();
   }
 
   fetchTime = event => {
-    this.props.fetchTime();
+    //this.props.fetchTime();
   };
 
   render() {
     return (
-      <div className="App">
-        <div>
-          <button onClick={this.fetchTime}>Get time!</button>
+      <div className="App container">
+        <PageHeader>CS Control</PageHeader>
+        <div className="row">
+          <RequestView />
+          <OfferForm />
         </div>
-
-        <Hour />
-        <Minute />
-        <Second />
+        <div className="row">
+          <ReservationView />
+          <OfferView />
+        </div>
       </div>
     );
   }
