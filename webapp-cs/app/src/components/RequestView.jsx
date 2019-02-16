@@ -14,7 +14,7 @@ class RequestView extends React.Component {
     super(props);
 
     this.state = {
-      lastId: 0,
+      lastId: -1,
       activeItem: -1,
       items: []
     };
@@ -86,7 +86,11 @@ class RequestView extends React.Component {
   render() {
     return (
       <div className="TableView col-sm-6">
-        <h3>Requests</h3>
+        <div className="row">
+          <div className="pull-left">
+            <h3>Requests</h3>
+          </div>
+        </div>
 
         <div className="row">
           <div className="pull-left">

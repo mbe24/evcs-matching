@@ -1,5 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
+import Button from 'react-bootstrap/lib/Button';
 import Table from 'react-bootstrap/lib/Table';
 import './ReservationView.css';
 import { setRequestActive } from '../actions/requestViewActions';
@@ -99,19 +100,39 @@ class ReservationView extends React.Component {
   render() {
     return (
       <div className="TableView col-sm-6">
-        <h3>Reservations</h3>
-        <Table responsive striped hover>
-          <thead>
-            <tr>
-              <th className="text-center">ID</th>
-              <th className="text-center">Energy</th>
-              <th className="text-center">Date</th>
-              <th className="text-center">Time</th>
-              <th className="text-center">Window</th>
-            </tr>
-          </thead>
-          <tbody>{this.createTableEntries(this.state.items)}</tbody>
-        </Table>
+        <div className="row">
+          <div className="pull-left">
+            <h3>Reservations</h3>
+          </div>
+        </div>
+
+        <div className="row">
+          <div className="pull-left">
+            <Button
+              bsStyle="primary"
+              bsSize="sm"
+              type="button"
+              onClick={e => {}}
+            >
+              Load
+            </Button>
+          </div>
+        </div>
+
+        <div className="row">
+          <Table responsive striped hover>
+            <thead>
+              <tr>
+                <th className="text-center">ID</th>
+                <th className="text-center">Energy</th>
+                <th className="text-center">Date</th>
+                <th className="text-center">Time</th>
+                <th className="text-center">Window</th>
+              </tr>
+            </thead>
+            <tbody>{this.createTableEntries(this.state.items)}</tbody>
+          </Table>
+        </div>
       </div>
     );
   }

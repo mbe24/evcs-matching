@@ -8,6 +8,7 @@ import FormControl from 'react-bootstrap/lib/FormControl';
 import ControlLabel from 'react-bootstrap/lib/ControlLabel';
 import Col from 'react-bootstrap/lib/Col';
 import './OfferForm.css';
+import { submitOffer } from '../actions/offerFormActions';
 
 function createDefaultOffer() {
   let date = new Date();
@@ -18,9 +19,10 @@ function createDefaultOffer() {
     price: 0.0,
     energy: 0,
     date: now.toISOString().substr(0, 10),
-    time: now.toISOString().substr(11, 5),
+    time: now.toISOString().substr(11, 8),
     window: 0
   };
+
   return offer;
 }
 
@@ -41,13 +43,15 @@ class OfferForm extends React.Component {
   // TODO read price from server response
   componentWillReceiveProps(nextProps) {
     let offer = nextProps.request;
+
     if (!nextProps.active) offer = createDefaultOffer();
     else offer.price = Math.round(100 * offer.energy * 0.2) / 100;
 
     this.setState({
       ...this.state,
       offer: offer,
-      active: nextProps.active
+      active: nextProps.active,
+      isLoading: nextProps.isLoading
     });
   }
 
@@ -60,37 +64,27 @@ class OfferForm extends React.Component {
 
   handleSubmit(event) {
     event.preventDefault();
-    this.setState({ ...this.state, isLoading: true });
-
-    let request = Object.assign({}, this.state.offer);
-
-    // TODO move to actions, evaluate answer
-    fetch('/app/api/v1/offer/create', {
-      method: 'post',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(request)
-    })
-      .then(_ => this.setState({ ...this.state, isLoading: false }))
-      //.then(response => response.json())
-      //.then(data => console.log(data))
-      .catch(err => {
-        console.log('Error while posting request...');
-        console.log(err);
-      });
+    this.props.submitOffer(this.state.offer);
   }
 
   render() {
+    let labelWidth = 2;
+    let textfieldWidth = 10;
+
     return (
       <div className="OfferForm col-sm-6">
-        <h3>Offer</h3>
+        <div className="row">
+          <div className="pull-left">
+            <h3>Offer</h3>
+          </div>
+        </div>
+
         <Form horizontal onSubmit={this.handleSubmit}>
           <FormGroup controlId="id" bsSize="small">
-            <Col componentClass={ControlLabel} sm={3}>
+            <Col componentClass={ControlLabel} sm={labelWidth}>
               ID
             </Col>
-            <Col sm={9}>
+            <Col sm={textfieldWidth}>
               <FormControl
                 disabled
                 autoFocus
@@ -101,10 +95,10 @@ class OfferForm extends React.Component {
           </FormGroup>
 
           <FormGroup controlId="price" bsSize="small">
-            <Col componentClass={ControlLabel} sm={3}>
+            <Col componentClass={ControlLabel} sm={labelWidth}>
               Price
             </Col>
-            <Col sm={9}>
+            <Col sm={textfieldWidth}>
               <InputGroup>
                 <FormControl
                   disabled={!this.state.active}
@@ -122,10 +116,10 @@ class OfferForm extends React.Component {
           </FormGroup>
 
           <FormGroup controlId="energy" bsSize="small">
-            <Col componentClass={ControlLabel} sm={3}>
+            <Col componentClass={ControlLabel} sm={labelWidth}>
               Energy
             </Col>
-            <Col sm={9}>
+            <Col sm={textfieldWidth}>
               <InputGroup>
                 <FormControl
                   disabled={true}
@@ -142,10 +136,10 @@ class OfferForm extends React.Component {
           </FormGroup>
 
           <FormGroup controlId="date" bsSize="small">
-            <Col componentClass={ControlLabel} sm={3}>
+            <Col componentClass={ControlLabel} sm={labelWidth}>
               Date
             </Col>
-            <Col sm={9}>
+            <Col sm={textfieldWidth}>
               <FormControl
                 disabled={!this.state.active}
                 autoFocus
@@ -157,10 +151,10 @@ class OfferForm extends React.Component {
           </FormGroup>
 
           <FormGroup controlId="time" bsSize="small">
-            <Col componentClass={ControlLabel} sm={3}>
+            <Col componentClass={ControlLabel} sm={labelWidth}>
               Time
             </Col>
-            <Col sm={9}>
+            <Col sm={textfieldWidth}>
               <FormControl
                 disabled={!this.state.active}
                 autoFocus
@@ -172,10 +166,10 @@ class OfferForm extends React.Component {
           </FormGroup>
 
           <FormGroup controlId="window" bsSize="small">
-            <Col componentClass={ControlLabel} sm={3}>
+            <Col componentClass={ControlLabel} sm={labelWidth}>
               Window
             </Col>
-            <Col sm={9}>
+            <Col sm={textfieldWidth}>
               <InputGroup>
                 <FormControl
                   disabled={!this.state.active}
@@ -193,13 +187,13 @@ class OfferForm extends React.Component {
           </FormGroup>
 
           <FormGroup>
-            <Col smOffset={3} sm={2}>
+            <Col smOffset={2} sm={2}>
               <Button
                 disabled={!this.state.active || this.state.isLoading}
                 bsStyle="primary"
                 bsSize="sm"
                 type="submit"
-                onClick={!this.state.isLoading ? this.handleClick : null}
+                onClick={!this.state.isLoading ? this.handleSubmit : null}
               >
                 Submit
               </Button>
@@ -213,10 +207,15 @@ class OfferForm extends React.Component {
 
 const mapStateToProps = state => ({
   request: state.offerFormReducer.request,
-  active: state.offerFormReducer.active
+  active: state.offerFormReducer.active,
+  isLoading: state.offerFormReducer.isLoading
+});
+
+const mapDispatchToProps = dispatch => ({
+  submitOffer: offer => dispatch(submitOffer(offer))
 });
 
 export default connect(
   mapStateToProps,
-  null
+  mapDispatchToProps
 )(OfferForm);

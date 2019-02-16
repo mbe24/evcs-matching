@@ -17,3 +17,12 @@ tbody tr {
   width: 550px;
   table-layout: fixed;
 }
+
+.margin-left {
+  margin-left: 5px;
+}
+
+.dropdown-menu {
+  max-height: 10em;
+  overflow-y: scroll;
+}

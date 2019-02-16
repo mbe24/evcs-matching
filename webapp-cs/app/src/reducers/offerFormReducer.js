@@ -1,6 +1,6 @@
 import * as ACTION from '../actions/actionTypes';
 
-const initialState = {};
+const initialState = { isLoading: false };
 
 export default (state = initialState, action) => {
   switch (action.type) {
@@ -10,6 +10,10 @@ export default (state = initialState, action) => {
         request: action.payload.request,
         active: action.payload.active
       };
+    case ACTION.SUBMIT_OFFER_START:
+      return { ...state, isLoading: action.payload.isLoading };
+    case ACTION.SUBMIT_OFFER:
+      return { ...state, isLoading: action.payload.isLoading };
     default:
       return state;
   }

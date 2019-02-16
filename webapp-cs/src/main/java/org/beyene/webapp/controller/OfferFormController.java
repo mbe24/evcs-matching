@@ -19,7 +19,7 @@ public class OfferFormController {
             value = "/create",
             consumes = MediaType.APPLICATION_JSON_UTF8_VALUE,
             produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public void doRequest(@RequestBody EvOffer offer) {
+    public void submitOffer(@RequestBody EvOffer offer) {
         String s = new ToStringCreator(offer)
                 .append("price", offer.price)
                 .append("energy", offer.energy)
