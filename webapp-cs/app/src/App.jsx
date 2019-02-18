@@ -2,7 +2,6 @@ import React from 'react';
 import { connect } from 'react-redux';
 import './App.css';
 import PageHeader from 'react-bootstrap/lib/PageHeader';
-import { fetchTime, fetchTimePoll } from './actions/timeActions';
 import RequestView from './components/RequestView';
 import OfferForm from './components/OfferForm';
 import OfferView from './components/OfferView';
@@ -17,10 +16,6 @@ class App extends React.Component {
   componentWillMount() {
     //this.props.fetchTimePoll();
   }
-
-  fetchTime = event => {
-    //this.props.fetchTime();
-  };
 
   render() {
     return (
@@ -43,12 +38,7 @@ const mapStateToProps = state => ({
   ...state
 });
 
-const mapDispatchToProps = dispatch => ({
-  fetchTime: () => dispatch(fetchTime()),
-  fetchTimePoll: () => dispatch(fetchTimePoll())
-});
-
 export default connect(
   mapStateToProps,
-  mapDispatchToProps
+  null
 )(App);
