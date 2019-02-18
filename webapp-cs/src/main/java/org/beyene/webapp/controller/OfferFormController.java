@@ -2,7 +2,7 @@ package org.beyene.webapp.controller;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.beyene.webapp.common.dto.EvOffer;
+import org.beyene.webapp.common.dto.CsOffer;
 import org.springframework.core.style.ToStringCreator;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +19,7 @@ public class OfferFormController {
             value = "/create",
             consumes = MediaType.APPLICATION_JSON_UTF8_VALUE,
             produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public void submitOffer(@RequestBody EvOffer offer) {
+    public void submitOffer(@RequestBody CsOffer offer) {
         String s = new ToStringCreator(offer)
                 .append("price", offer.price)
                 .append("energy", offer.energy)

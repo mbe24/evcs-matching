@@ -1,5 +1,7 @@
 package org.beyene.webapp.controller;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.beyene.webapp.common.dto.EvRequest;
 import org.beyene.webapp.ev.dto.dto.Time;
 import org.springframework.http.MediaType;
@@ -16,6 +18,8 @@ import java.util.List;
 @ResponseBody
 @RestController
 public class RequestsController {
+
+    private static final Log logger = LogFactory.getLog(RequestsController.class);
 
     @GetMapping(value = "/load", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @ResponseBody

@@ -3,7 +3,7 @@ package org.beyene.webapp.common.dto;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
-public class EvOffer {
+public class CsOffer {
     public long id;
     public double price;
     public double energy;

@@ -3,93 +3,85 @@ import { connect } from 'react-redux';
 import Button from 'react-bootstrap/lib/Button';
 import Table from 'react-bootstrap/lib/Table';
 import './ReservationView.css';
-import { setRequestActive } from '../actions/requestViewActions';
+import {
+  fetchReservations,
+  updateReservation
+} from '../actions/reservationViewActions';
 
 // http://allenfang.github.io/react-bootstrap-table/index.html
 // https://react-bootstrap.netlify.com/components/table/
 // https://react-bootstrap.github.io/components/modal/
 
-function randomDateInRange(start, days) {
-  return new Date(start.getTime() + Math.random() * days * 24 * 60 * 60 * 1000);
-}
-
-function* range(start, end) {
-  for (let i = start; i < end; i++) {
-    yield i;
-  }
-}
-
-function createItems(data) {
-  let date = new Date();
-  let now = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-
-  let items = [];
-  data.forEach(i => {
-    let random = randomDateInRange(now, 7);
-    let date = random.toISOString().substr(0, 10);
-    let time = random.toISOString().substr(11, 5);
-    let isActive = false;
-    let energy =
-      20 +
-      Math.ceil(80 * Math.random()) +
-      (25 * Math.ceil(4 * Math.random())) / 100;
-    let window = 15 + 15 * Math.ceil((240 / 15) * Math.random());
-
-    items.push({
-      id: i,
-      isActive: isActive,
-      date: date,
-      time: time,
-      energy: energy,
-      window: window
-    });
-  });
-
-  return items;
-}
-
 class ReservationView extends React.Component {
   constructor(props) {
     super(props);
 
-    let n = 50;
-    let elements = [...range(0, n)];
     this.state = {
+      lastId: -1,
       activeItem: -1,
-      items: createItems(elements)
+      items: []
     };
 
     this.handleClick = this.handleClick.bind(this);
+    this.handleLoad = this.handleLoad.bind(this);
+    this.handleAction = this.handleAction.bind(this);
     this.createTableEntries = this.createTableEntries.bind(this);
+  }
+
+  // https://daveceddia.com/where-fetch-data-redux/
+  componentWillReceiveProps(nextProps) {
+    let reservations = nextProps.reservations;
+
+    let items = this.state.items;
+    if (reservations != null && reservations.length !== 0) {
+      items = reservations;
+    }
+
+    let update = nextProps.update;
+    if (update != null && Object.keys(update).length > 0) {
+      let status = update.op === 'ACCEPT' ? 'ACCEPTED' : 'REJECTED';
+      items.find(item => item.id === update.id).status = status;
+    }
+
+    this.setState({
+      ...this.state,
+      items: items
+    });
   }
 
   handleClick(event) {
     let id = event.currentTarget.dataset.id;
     if (id === this.state.activeItem) id = -1;
     this.setState({ ...this.state, activeItem: id });
+  }
 
-    //let hasRequest = id !== -1;
-    //let request = hasRequest ? this.state.items[id] : {};
-    //this.props.setRequestActive(request, hasRequest);
+  handleLoad(event) {
+    this.props.fetchReservations(this.state.lastId);
+  }
+
+  handleAction(event) {
+    let op = event.currentTarget.dataset.action;
+    let reservation = this.state.items[this.state.activeItem];
+    this.props.updateReservation(reservation.id, op);
   }
 
   createTableEntries(items) {
     let entries = [];
-    items.forEach(item => {
-      let isActive = item.id.toString() === this.state.activeItem.toString();
+    items.forEach((item, i) => {
+      let isActive = i.toString() === this.state.activeItem.toString();
 
       entries.push(
         <tr
           className={isActive ? 'info' : ''}
-          key={item.id}
-          data-id={item.id}
+          key={i}
+          data-id={i}
           onClick={this.handleClick}
         >
-          <td>{item.id}</td>
-          <td>{item.energy}</td>
-          <td>{item.date}</td>
-          <td>{item.time}</td>
-          <td>{item.window}</td>
+          <td>{item.requestId}</td>
+          <td>{item.offerId}</td>
+          <td>{item.price}</td>
+          <td>{item.payment}</td>
+          <td>{item.status}</td>
         </tr>
       );
     });
@@ -98,6 +90,12 @@ class ReservationView extends React.Component {
   }
 
   render() {
+    let enableActions = false;
+    if (this.state.activeItem !== -1) {
+      let reservation = this.state.items[this.state.activeItem];
+      enableActions = 'OPEN' === reservation.status;
+    }
+
     return (
       <div className="TableView col-sm-6">
         <div className="row">
@@ -112,10 +110,38 @@ class ReservationView extends React.Component {
               bsStyle="primary"
               bsSize="sm"
               type="button"
-              onClick={e => {}}
+              onClick={this.handleLoad}
             >
               Load
             </Button>
+
+            <span className="margin-left">
+              <Button
+                disabled={!enableActions}
+                key="acpt"
+                data-action="ACCEPT"
+                bsStyle="success"
+                bsSize="sm"
+                type="button"
+                onClick={this.handleAction}
+              >
+                Accept
+              </Button>
+            </span>
+
+            <span className="margin-left">
+              <Button
+                disabled={!enableActions}
+                key="rjct"
+                data-action="REJECT"
+                bsStyle="danger"
+                bsSize="sm"
+                type="button"
+                onClick={this.handleAction}
+              >
+                Reject
+              </Button>
+            </span>
           </div>
         </div>
 
@@ -123,11 +149,11 @@ class ReservationView extends React.Component {
           <Table responsive striped hover>
             <thead>
               <tr>
-                <th className="text-center">ID</th>
-                <th className="text-center">Energy</th>
-                <th className="text-center">Date</th>
-                <th className="text-center">Time</th>
-                <th className="text-center">Window</th>
+                <th className="text-center">Request</th>
+                <th className="text-center">Offer</th>
+                <th className="text-center">Price</th>
+                <th className="text-center">Payment</th>
+                <th className="text-center">Status</th>
               </tr>
             </thead>
             <tbody>{this.createTableEntries(this.state.items)}</tbody>
@@ -141,12 +167,18 @@ class ReservationView extends React.Component {
 // https://redux.js.org/api/bindactioncreators
 // https://stackoverflow.com/questions/38202572/understanding-react-redux-and-mapstatetoprops
 
+const mapStateToProps = state => ({
+  reservations: state.reservationViewReducer.reservations,
+  update: state.reservationViewReducer.update
+});
+
 const mapDispatchToProps = dispatch => ({
-  setRequestActive: (request, active) =>
-    dispatch(setRequestActive(request, active))
+  fetchReservations: lastId => dispatch(fetchReservations(lastId)),
+  updateReservation: (id, operation) =>
+    dispatch(updateReservation(id, operation))
 });
 
 export default connect(
-  null,
+  mapStateToProps,
   mapDispatchToProps
 )(ReservationView);
