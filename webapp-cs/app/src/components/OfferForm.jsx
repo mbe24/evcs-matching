@@ -40,7 +40,6 @@ class OfferForm extends React.Component {
     this.handleSubmit = this.handleSubmit.bind(this);
   }
 
-  // TODO read price from server response
   componentWillReceiveProps(nextProps) {
     let offer = nextProps.request;
 

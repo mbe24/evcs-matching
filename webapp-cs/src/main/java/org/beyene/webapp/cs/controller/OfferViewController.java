@@ -1,4 +1,4 @@
-package org.beyene.webapp.controller;
+package org.beyene.webapp.cs.controller;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -15,7 +15,7 @@ import java.util.List;
 @RequestMapping(path = "api/v1/offers")
 @ResponseBody
 @RestController
-public class OffersController {
+public class OfferViewController {
 
     private static final Log logger = LogFactory.getLog(OfferFormController.class);
 

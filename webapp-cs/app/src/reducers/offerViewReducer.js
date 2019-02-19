@@ -2,6 +2,7 @@ import * as ACTION from '../actions/actionTypes';
 
 const initialState = { requests: [], data: {} };
 
+// Why fetch requests
 export default (state = initialState, action) => {
   switch (action.type) {
     case ACTION.FETCH_REQUEST:

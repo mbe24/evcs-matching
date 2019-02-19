@@ -1,4 +1,4 @@
-package org.beyene.webapp.controller;
+package org.beyene.webapp.cs.controller;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -15,9 +15,9 @@ import java.util.List;
 @RequestMapping(path = "api/v1/requests")
 @ResponseBody
 @RestController
-public class RequestsController {
+public class RequestViewController {
 
-    private static final Log logger = LogFactory.getLog(RequestsController.class);
+    private static final Log logger = LogFactory.getLog(RequestViewController.class);
 
     @GetMapping(value = "/load", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @ResponseBody

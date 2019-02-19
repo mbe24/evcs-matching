@@ -1,4 +1,4 @@
-package org.beyene.webapp.controller;
+package org.beyene.webapp.cs.controller;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

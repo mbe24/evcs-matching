@@ -11,9 +11,9 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping(path = "api/v1/request")
 @ResponseBody
 @RestController
-public class RequestController {
+public class RequestFormController {
 
-    private static final Log logger = LogFactory.getLog(RequestController.class);
+    private static final Log logger = LogFactory.getLog(RequestFormController.class);
 
     @PostMapping(
             value = "/create",

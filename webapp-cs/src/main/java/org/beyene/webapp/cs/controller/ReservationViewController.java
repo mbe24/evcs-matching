@@ -1,4 +1,4 @@
-package org.beyene.webapp.controller;
+package org.beyene.webapp.cs.controller;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -15,9 +15,9 @@ import java.util.Optional;
 @RequestMapping(path = "api/v1/reservations")
 @ResponseBody
 @RestController
-public class ReservationsController {
+public class ReservationViewController {
 
-    private static final Log logger = LogFactory.getLog(ReservationsController.class);
+    private static final Log logger = LogFactory.getLog(ReservationViewController.class);
 
     private final List<EvReservation> reservations = new ArrayList<>();
     private long id = 0;

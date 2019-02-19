@@ -1,4 +1,4 @@
-package org.beyene.webapp.controller;
+package org.beyene.webapp.cs.controller;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
