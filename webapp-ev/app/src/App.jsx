@@ -1,11 +1,11 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import './App.css';
-import { fetchTime, fetchTimePoll } from './actions/timeActions';
 import PageHeader from 'react-bootstrap/lib/PageHeader';
 import RequestForm from './components/RequestForm';
+import RequestView from './components/RequestView';
 import OfferView from './components/OfferView';
-import TableView from './components/TableView';
+import ReservationView from './components/ReservationView';
 
 // or without decorator
 // see: https://blog.logrocket.com/react-redux-connect-when-and-how-to-use-it-f2a1edab2013
@@ -17,21 +17,19 @@ class App extends React.Component {
     //this.props.fetchTimePoll();
   }
 
-  fetchTime = event => {
-    //this.props.fetchTime();
-  };
-
   // TODO implement OfferView with techniques from TableView
   render() {
     return (
       <div className="App container">
         <PageHeader>EV Control</PageHeader>
-        <div class="row">
+        <div className="row">
           <RequestForm />
-          <OfferView />
+          <RequestView />
         </div>
-        <div class="row">
-          <TableView />
+
+        <div className="row">
+          <OfferView />
+          <ReservationView />
         </div>
       </div>
     );
@@ -42,12 +40,7 @@ const mapStateToProps = state => ({
   ...state
 });
 
-const mapDispatchToProps = dispatch => ({
-  fetchTime: () => dispatch(fetchTime()),
-  fetchTimePoll: () => dispatch(fetchTimePoll())
-});
-
 export default connect(
   mapStateToProps,
-  mapDispatchToProps
+  null
 )(App);

@@ -1,12 +1,13 @@
 import { combineReducers } from 'redux';
-
-import minuteReducer from './minuteReducer';
-import hourReducer from './hourReducer';
-import secondReducer from './secondReducer';
+import requestFormReducer from './requestFormReducer';
+import requestViewReducer from './requestViewReducer';
+import offerViewReducer from './offerViewReducer';
+import reservationViewReducer from './reservationViewReducer';
 
 // it is possible to name reducers
 export default combineReducers({
-  hourReducer: hourReducer,
-  minuteReducer: minuteReducer,
-  secondReducer: secondReducer
+  requestFormReducer: requestFormReducer,
+  requestViewReducer: requestViewReducer,
+  offerViewReducer: offerViewReducer,
+  reservationViewReducer: reservationViewReducer
 });

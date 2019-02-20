@@ -8,6 +8,7 @@ import FormControl from 'react-bootstrap/lib/FormControl';
 import ControlLabel from 'react-bootstrap/lib/ControlLabel';
 import Col from 'react-bootstrap/lib/Col';
 import './RequestForm.css';
+import { submitRequest } from '../actions/requestFormActions';
 
 function createDefaultRequest() {
   let date = new Date();
@@ -19,6 +20,7 @@ function createDefaultRequest() {
     time: now.toISOString().substr(11, 5),
     window: 2
   };
+
   return request;
 }
 
@@ -28,61 +30,56 @@ class RequestForm extends React.Component {
 
     this.state = {
       isLoading: false,
-      ...createDefaultRequest()
+      request: createDefaultRequest()
     };
 
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
   }
 
+  componentWillReceiveProps(nextProps) {
+    this.setState({
+      ...this.state,
+      isLoading: nextProps.isLoading
+    });
+  }
+
   handleChange(event) {
-    this.setState({ ...this.state, [event.target.id]: event.target.value });
+    this.setState({
+      ...this.state,
+      request: { ...this.state.request, [event.target.id]: event.target.value }
+    });
   }
 
   handleSubmit(event) {
     event.preventDefault();
-    this.setState({ ...this.state, isLoading: true });
-
-    let request = Object.assign({}, this.state);
-    delete request.isLoading;
-
-    fetch('/app/api/v1/request/create', {
-      method: 'post',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(request)
-    })
-      .then(_ => this.setState({ ...this.state, isLoading: false }))
-      //.then(response => response.json())
-      //.then(data => console.log(data))
-      .catch(err => {
-        console.log('Error while posting request...');
-        console.log(err);
-      });
-
-    this.setState({
-      ...this.state,
-      ...{ ...createDefaultRequest(), energy: 0, window: 0 }
-    });
+    this.props.submitRequest(this.state.request);
   }
 
   render() {
+    let labelWidth = 2;
+    let textfieldWidth = 10;
+
     return (
       <div className="RequestForm col-sm-6">
-        <h3>Request</h3>
+        <div className="row">
+          <div className="pull-left">
+            <h3>Request</h3>
+          </div>
+        </div>
+
         <Form horizontal onSubmit={this.handleSubmit}>
           <FormGroup controlId="energy" bsSize="small">
-            <Col componentClass={ControlLabel} sm={3}>
+            <Col componentClass={ControlLabel} sm={labelWidth}>
               Energy
             </Col>
-            <Col sm={9}>
+            <Col sm={textfieldWidth}>
               <InputGroup>
                 <FormControl
                   autoFocus
                   type="number"
                   step="0.01"
-                  value={this.state.energy}
+                  value={this.state.request.energy}
                   onChange={this.handleChange}
                 />
                 <InputGroup.Addon>
@@ -93,44 +90,44 @@ class RequestForm extends React.Component {
           </FormGroup>
 
           <FormGroup controlId="date" bsSize="small">
-            <Col componentClass={ControlLabel} sm={3}>
+            <Col componentClass={ControlLabel} sm={labelWidth}>
               Date
             </Col>
-            <Col sm={9}>
+            <Col sm={textfieldWidth}>
               <FormControl
                 autoFocus
                 type="date"
-                value={this.state.date}
+                value={this.state.request.date}
                 onChange={this.handleChange}
               />
             </Col>
           </FormGroup>
 
           <FormGroup controlId="time" bsSize="small">
-            <Col componentClass={ControlLabel} sm={3}>
+            <Col componentClass={ControlLabel} sm={labelWidth}>
               Time
             </Col>
-            <Col sm={9}>
+            <Col sm={textfieldWidth}>
               <FormControl
                 autoFocus
                 type="time"
-                value={this.state.time}
+                value={this.state.request.time}
                 onChange={this.handleChange}
               />
             </Col>
           </FormGroup>
 
           <FormGroup controlId="window" bsSize="small">
-            <Col componentClass={ControlLabel} sm={3}>
+            <Col componentClass={ControlLabel} sm={labelWidth}>
               Window
             </Col>
-            <Col sm={9}>
+            <Col sm={textfieldWidth}>
               <InputGroup>
                 <FormControl
                   autoFocus
                   type="number"
                   step="1"
-                  value={this.state.window}
+                  value={this.state.request.window}
                   onChange={this.handleChange}
                 />
                 <InputGroup.Addon>
@@ -141,13 +138,13 @@ class RequestForm extends React.Component {
           </FormGroup>
 
           <FormGroup>
-            <Col smOffset={3} sm={2}>
+            <Col smOffset={2} sm={2}>
               <Button
                 bsStyle="primary"
                 bsSize="sm"
                 type="submit"
                 disabled={this.state.isLoading}
-                onClick={!this.state.isLoading ? this.handleClick : null}
+                onClick={!this.state.isLoading ? this.handleSubmit : null}
               >
                 Submit
               </Button>
@@ -159,7 +156,15 @@ class RequestForm extends React.Component {
   }
 }
 
+const mapStateToProps = state => ({
+  isLoading: state.requestFormReducer.isLoading
+});
+
+const mapDispatchToProps = dispatch => ({
+  submitRequest: request => dispatch(submitRequest(request))
+});
+
 export default connect(
-  null,
-  null
+  mapStateToProps,
+  mapDispatchToProps
 )(RequestForm);
