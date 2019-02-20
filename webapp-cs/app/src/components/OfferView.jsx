@@ -126,7 +126,7 @@ class OfferView extends React.Component {
     }
 
     return (
-      <div className="TableView col-sm-6">
+      <div className="OfferView col-sm-6">
         <div className="row">
           <div className="pull-left">
             <h3>{'Offers' + currentRequest}</h3>

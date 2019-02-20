@@ -97,7 +97,7 @@ class ReservationView extends React.Component {
     }
 
     return (
-      <div className="TableView col-sm-6">
+      <div className="ReservationView col-sm-6">
         <div className="row">
           <div className="pull-left">
             <h3>Reservations</h3>

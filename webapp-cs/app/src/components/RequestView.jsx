@@ -85,7 +85,7 @@ class RequestView extends React.Component {
 
   render() {
     return (
-      <div className="TableView col-sm-6">
+      <div className="RequestView col-sm-6">
         <div className="row">
           <div className="pull-left">
             <h3>Requests</h3>

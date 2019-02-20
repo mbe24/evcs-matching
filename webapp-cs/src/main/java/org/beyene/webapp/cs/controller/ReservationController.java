@@ -15,9 +15,9 @@ import java.util.Optional;
 @RequestMapping(path = "api/v1/reservations")
 @ResponseBody
 @RestController
-public class ReservationViewController {
+public class ReservationController {
 
-    private static final Log logger = LogFactory.getLog(ReservationViewController.class);
+    private static final Log logger = LogFactory.getLog(ReservationController.class);
 
     private final List<EvReservation> reservations = new ArrayList<>();
     private long id = 0;

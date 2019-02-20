@@ -15,9 +15,9 @@ import java.util.List;
 @RequestMapping(path = "api/v1/requests")
 @ResponseBody
 @RestController
-public class RequestViewController {
+public class RequestController {
 
-    private static final Log logger = LogFactory.getLog(RequestViewController.class);
+    private static final Log logger = LogFactory.getLog(RequestController.class);
 
     @GetMapping(value = "/load", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @ResponseBody
