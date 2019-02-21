@@ -50,7 +50,9 @@ class OfferView extends React.Component {
     }
 
     let requests = nextProps.requests;
-    let ids = requests.map(r => r.id);
+    let ids = requests
+      .map(r => r.id)
+      .filter(id => !this.state.requests.includes(id));
 
     this.setState({
       ...this.state,
