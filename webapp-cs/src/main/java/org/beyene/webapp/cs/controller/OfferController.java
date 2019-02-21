@@ -1,6 +1,6 @@
 package org.beyene.webapp.cs.controller;
 
-import org.beyene.protocol.api.CsProtocol;
+import org.beyene.protocol.api.CsApi;
 import org.beyene.protocol.common.dto.CsOffer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -15,20 +15,20 @@ import java.util.List;
 public class OfferController {
 
     @Autowired
-    private CsProtocol csProtocol;
+    private CsApi csApi;
 
     @PostMapping(
             value = "/create/r/{id}",
             consumes = MediaType.APPLICATION_JSON_UTF8_VALUE,
             produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public void submitOffer(@PathVariable(value = "id") String requestId, @RequestBody CsOffer offer) {
-        csProtocol.submitOffer(requestId, offer);
+        csApi.submitOffer(requestId, offer);
     }
 
     @GetMapping(
             value = "/r/{id}",
             produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public List<CsOffer> getOffers(@PathVariable(value = "id") String requestId, @RequestParam(value = "lastId") String lastId) {
-        return csProtocol.getOffers(requestId, lastId);
+        return csApi.getOffers(requestId, lastId);
     }
 }

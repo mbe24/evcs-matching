@@ -28,7 +28,9 @@ repositories {
 dependencies {
 	implementation project(':protocol-api')
 	implementation project(':protocol-common')
+	implementation project(':protocol-tcp')
 	implementation project(':webapp-common')
+	implementation 'info.picocli:picocli:3.8.2'
 	implementation 'org.springframework.boot:spring-boot-starter-jersey'
 	implementation 'org.springframework:spring-webmvc:5.1.3.RELEASE'
 	implementation 'org.springframework.boot:spring-boot-starter-web'

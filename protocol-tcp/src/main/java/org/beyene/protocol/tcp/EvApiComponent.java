@@ -1,8 +1,8 @@
-package org.beyene.webapp.ev;
+package org.beyene.protocol.tcp;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.beyene.protocol.api.EvProtocol;
+import org.beyene.protocol.api.EvApi;
 import org.beyene.protocol.common.dto.CsOffer;
 import org.beyene.protocol.common.dto.CsReservation;
 import org.beyene.protocol.common.dto.EvRequest;
@@ -17,10 +17,11 @@ import java.time.LocalTime;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-@Component
-public class ProtocolComponent implements EvProtocol {
 
-    private static final Log logger = LogFactory.getLog(ProtocolComponent.class);
+@Component
+public class EvApiComponent implements EvApi {
+
+    private static final Log logger = LogFactory.getLog(EvApiComponent.class);
 
     private final List<EvRequest> requests = new CopyOnWriteArrayList<>();
 

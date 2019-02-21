@@ -1,6 +1,6 @@
 package org.beyene.webapp.cs.controller;
 
-import org.beyene.protocol.api.CsProtocol;
+import org.beyene.protocol.api.CsApi;
 import org.beyene.protocol.common.dto.CsReservation;
 import org.beyene.protocol.common.dto.CsReservation.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,17 +16,17 @@ import java.util.List;
 public class ReservationController {
 
     @Autowired
-    private CsProtocol csProtocol;
+    private CsApi csApi;
 
     @PutMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @ResponseBody
     public void updateReservation(@PathVariable("id") String id, @RequestParam(value = "op") Operation op) {
-        csProtocol.updateReservation(id, op);
+        csApi.updateReservation(id, op);
     }
 
     @GetMapping(value = "/load", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @ResponseBody
     public List<CsReservation> getReservations(@RequestParam(value = "lastId") String lastId) {
-        return csProtocol.getReservations(lastId);
+        return csApi.getReservations(lastId);
     }
 }

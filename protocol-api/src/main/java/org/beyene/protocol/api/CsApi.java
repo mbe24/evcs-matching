@@ -8,7 +8,7 @@ import org.beyene.protocol.common.dto.EvRequest;
 
 import java.util.List;
 
-public interface CsProtocol {
+public interface CsApi {
 
     List<EvRequest> getRequests(String lastId);
 

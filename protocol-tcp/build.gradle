@@ -1,5 +1,68 @@
+buildscript {
+    ext {
+        springBootVersion = '2.1.1.RELEASE'
+    }
 
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath "org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}"
+        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.7'
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'com.google.protobuf'
+
+group 'org.beyene.zmq'
+version '1.0-SNAPSHOT'
 description = 'protocol-tcp'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+compileJava {
+    options.compilerArgs << "-Xlint:all"
+}
+
 dependencies {
-    testCompile group: 'junit', name: 'junit', version:'4.11'
+    implementation project(':protocol-api')
+    implementation project(':protocol-common')
+    implementation project(':webapp-common')
+    implementation 'org.zeromq:jeromq:0.4.3'
+    implementation 'com.google.protobuf:protobuf-java:3.6.1'
+//    compile 'org.msgpack:msgpack-core:0.8.16'
+    implementation 'org.springframework.boot:spring-boot-starter'
+    testImplementation 'junit:junit:4.12'
+}
+
+// see: https://stackoverflow.com/questions/32820728/simple-protobuf-compilation-with-gradle
+protobuf {
+    // configure the protoc executable
+    protoc {
+        // download from repositories
+        artifact = 'com.google.protobuf:protoc:3.6.1'
+    }
+
+    generateProtoTasks.generatedFilesBaseDir = 'src'
+    generateProtoTasks {
+        // all() returns the collection of all protoc tasks
+        all().each { task ->
+            // here you can configure the task
+        }
+
+        // in addition to all(), you may get the task collection by various
+        // criteria:
+
+        // (Java only) returns tasks for a sourceSet
+        ofSourceSet('main')
+    }
 }

@@ -1,6 +1,6 @@
 package org.beyene.webapp.ev.controller;
 
-import org.beyene.protocol.api.EvProtocol;
+import org.beyene.protocol.api.EvApi;
 import org.beyene.protocol.common.dto.EvReservation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -16,20 +16,20 @@ import java.util.List;
 public class ReservationController {
 
     @Autowired
-    private EvProtocol evProtocol;
+    private EvApi evApi;
 
     private final List<EvReservation> preReservations = new ArrayList<>();
 
     @PutMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @ResponseBody
     public EvReservation updateReservation(@PathVariable("id") String id, @RequestParam(value = "payment") String option) {
-        return evProtocol.updateReservation(id, option);
+        return evApi.updateReservation(id, option);
     }
 
     @GetMapping(value = "/load", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @ResponseBody
     public List<EvReservation> getReservations(@RequestParam(value = "lastId") String lastId) {
-        return evProtocol.getReservations(lastId);
+        return evApi.getReservations(lastId);
     }
 
     @PostMapping(
@@ -37,6 +37,6 @@ public class ReservationController {
             consumes = MediaType.APPLICATION_JSON_UTF8_VALUE,
             produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public void makeReservation(@PathVariable("id") String offerId, @RequestBody String requestId) {
-        evProtocol.makeReservation(offerId, requestId);
+        evApi.makeReservation(offerId, requestId);
     }
 }

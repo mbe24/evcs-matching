@@ -6,7 +6,7 @@ import org.beyene.protocol.common.dto.EvReservation;
 
 import java.util.List;
 
-public interface EvProtocol {
+public interface EvApi {
 
     List<EvRequest> getRequests(String lastId);
 

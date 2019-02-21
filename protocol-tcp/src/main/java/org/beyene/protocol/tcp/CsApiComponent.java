@@ -1,8 +1,8 @@
-package org.beyene.webapp.cs;
+package org.beyene.protocol.tcp;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.beyene.protocol.api.CsProtocol;
+import org.beyene.protocol.api.CsApi;
 import org.beyene.protocol.common.dto.CsOffer;
 import org.beyene.protocol.common.dto.CsReservation;
 import org.beyene.protocol.common.dto.EvRequest;
@@ -18,9 +18,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 @Component
-public class ProtocolComponent implements CsProtocol {
+public class CsApiComponent implements CsApi {
 
-    private static final Log logger = LogFactory.getLog(ProtocolComponent.class);
+    private static final Log logger = LogFactory.getLog(CsApiComponent.class);
 
     private final List<EvRequest> requests = new CopyOnWriteArrayList<>();
     private final List<CsReservation> reservations = new CopyOnWriteArrayList<>();
