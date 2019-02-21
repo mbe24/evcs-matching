@@ -2,14 +2,12 @@ package org.beyene.webapp.ev.controller;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.beyene.webapp.common.dto.EvRequest;
-import org.springframework.core.style.ToStringCreator;
+import org.beyene.protocol.api.EvProtocol;
+import org.beyene.protocol.common.dto.EvRequest;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @CrossOrigin
@@ -20,33 +18,20 @@ public class RequestController {
 
     private static final Log logger = LogFactory.getLog(RequestController.class);
 
+    @Autowired
+    private EvProtocol evProtocol;
+
     @GetMapping(value = "/load", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @ResponseBody
-    public List<EvRequest> getRequests(@RequestParam(value = "lastId") long lastId) {
-        EvRequest request = new EvRequest();
-        request.id = ++lastId;
-        request.energy = 45.56;
-        request.date = LocalDate.now();
-        request.time = LocalTime.now();
-        request.window = 250;
-
-        List<EvRequest> requests = new ArrayList<>();
-        requests.add(request);
-        return requests;
+    public List<EvRequest> getRequests(@RequestParam(value = "lastId") String lastId) {
+        return evProtocol.getRequests(lastId);
     }
 
     @PostMapping(
             value = "/create",
             consumes = MediaType.APPLICATION_JSON_UTF8_VALUE,
             produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public void submitEvRequest(@RequestBody EvRequest request) {
-        String s = new ToStringCreator(request)
-                .append("energy", request.energy)
-                .append("date", request.date)
-                .append("time", request.time)
-                .append("window", request.window)
-                .toString();
-
-        logger.info("New request: " + s);
+    public EvRequest submitRequest(@RequestBody EvRequest request) {
+        return evProtocol.submitRequest(request);
     }
 }

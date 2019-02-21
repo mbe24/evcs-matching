@@ -1,9 +1,9 @@
-package org.beyene.webapp.common.dto;
+package org.beyene.protocol.common.dto;
 
-public class EvReservation {
-    public long id;
-    public long requestId;
-    public long offerId;
+public class CsReservation {
+    public String id;
+    public String requestId;
+    public String offerId;
     public double price;
     public String payment;
     public Status status;

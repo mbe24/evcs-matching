@@ -17,7 +17,7 @@ function createDefaultRequest() {
   let request = {
     energy: 99.9,
     date: now.toISOString().substr(0, 10),
-    time: now.toISOString().substr(11, 5),
+    time: now.toISOString().substr(11, 8),
     window: 2
   };
 
@@ -54,6 +54,18 @@ class RequestForm extends React.Component {
   handleSubmit(event) {
     event.preventDefault();
     this.props.submitRequest(this.state.request);
+
+    let date = new Date();
+    let now = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+
+    let request = this.state.request;
+    request.date = now.toISOString().substr(0, 10);
+    request.time = now.toISOString().substr(11, 8);
+
+    this.setState({
+      ...this.state,
+      request: request
+    });
   }
 
   render() {

@@ -1,10 +1,10 @@
-package org.beyene.webapp.common.dto;
+package org.beyene.protocol.common.dto;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 
 public class EvRequest {
-    public long id;
+    public String id;
     public double energy;
     public LocalDate date;
     public LocalTime time;

@@ -63,7 +63,9 @@ class OfferForm extends React.Component {
 
   handleSubmit(event) {
     event.preventDefault();
-    this.props.submitOffer(this.state.offer);
+
+    let requestId = this.state.offer.id;
+    this.props.submitOffer(this.state.offer, requestId);
   }
 
   render() {
@@ -211,7 +213,7 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = dispatch => ({
-  submitOffer: offer => dispatch(submitOffer(offer))
+  submitOffer: (offer, requestId) => dispatch(submitOffer(offer, requestId))
 });
 
 export default connect(

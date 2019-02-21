@@ -1,9 +1,9 @@
 import * as ACTION from './actionTypes';
 
-export const submitOffer = offer => dispatch => {
+export const submitOffer = (offer, requestId) => dispatch => {
   dispatch({ type: ACTION.SUBMIT_OFFER_START, payload: { isLoading: true } });
 
-  fetch('/app/api/v1/offers/create', {
+  fetch('/app/api/v1/offers/create/r/' + requestId, {
     method: 'post',
     headers: {
       'Content-Type': 'application/json'

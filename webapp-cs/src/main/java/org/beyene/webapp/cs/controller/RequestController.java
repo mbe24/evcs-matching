@@ -1,14 +1,11 @@
 package org.beyene.webapp.cs.controller;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.beyene.webapp.common.dto.EvRequest;
+import org.beyene.protocol.api.CsProtocol;
+import org.beyene.protocol.common.dto.EvRequest;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @CrossOrigin
@@ -17,20 +14,12 @@ import java.util.List;
 @RestController
 public class RequestController {
 
-    private static final Log logger = LogFactory.getLog(RequestController.class);
+    @Autowired
+    private CsProtocol csProtocol;
 
     @GetMapping(value = "/load", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @ResponseBody
-    public List<EvRequest> getRequests(@RequestParam(value = "lastId") long lastId) {
-        EvRequest request = new EvRequest();
-        request.id = ++lastId;
-        request.energy = 45.56;
-        request.date = LocalDate.now();
-        request.time = LocalTime.now();
-        request.window = 250;
-
-        List<EvRequest> requests = new ArrayList<>();
-        requests.add(request);
-        return requests;
+    public List<EvRequest> getRequests(@RequestParam(value = "lastId") String lastId) {
+        return csProtocol.getRequests(lastId);
     }
 }

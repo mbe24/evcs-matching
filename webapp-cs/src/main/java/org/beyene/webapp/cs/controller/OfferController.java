@@ -1,15 +1,11 @@
 package org.beyene.webapp.cs.controller;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.beyene.webapp.common.dto.CsOffer;
-import org.springframework.core.style.ToStringCreator;
+import org.beyene.protocol.api.CsProtocol;
+import org.beyene.protocol.common.dto.CsOffer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @CrossOrigin
@@ -18,40 +14,21 @@ import java.util.List;
 @RestController
 public class OfferController {
 
-    private static final Log logger = LogFactory.getLog(OfferController.class);
+    @Autowired
+    private CsProtocol csProtocol;
 
     @PostMapping(
-            value = "/create",
+            value = "/create/r/{id}",
             consumes = MediaType.APPLICATION_JSON_UTF8_VALUE,
             produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public void submitOffer(@RequestBody CsOffer offer) {
-        String s = new ToStringCreator(offer)
-                .append("price", offer.price)
-                .append("energy", offer.energy)
-                .append("date", offer.date)
-                .append("time", offer.time)
-                .append("window", offer.window)
-                .toString();
-
-        logger.info("New offer: " + s);
+    public void submitOffer(@PathVariable(value = "id") String requestId, @RequestBody CsOffer offer) {
+        csProtocol.submitOffer(requestId, offer);
     }
 
     @GetMapping(
             value = "/r/{id}",
             produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public List<CsOffer> loadOffers(@PathVariable(value = "id") String requestId, @RequestParam(value = "lastId") long lastId) {
-        logger.info("RequestId=" + requestId + ", lastId=" + lastId);
-
-        CsOffer offer = new CsOffer();
-        offer.id = ++lastId;
-        offer.price = 22;
-        offer.energy = 22.56;
-        offer.date = LocalDate.now();
-        offer.time = LocalTime.now();
-        offer.window = 30;
-
-        List<CsOffer> offers = new ArrayList<>();
-        offers.add(offer);
-        return offers;
+    public List<CsOffer> getOffers(@PathVariable(value = "id") String requestId, @RequestParam(value = "lastId") String lastId) {
+        return csProtocol.getOffers(requestId, lastId);
     }
 }

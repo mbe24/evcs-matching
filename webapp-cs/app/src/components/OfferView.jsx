@@ -33,7 +33,8 @@ class OfferView extends React.Component {
     if (latestData != null) {
       let requestId = latestData.requestId;
       let offers = latestData.offers;
-      let lastId = offers[offers.length - 1].id;
+      let lastId = -1;
+      if (offers.length > 0) lastId = offers[offers.length - 1].id;
 
       let offersForRequest = [];
       let requestData = data[requestId];
