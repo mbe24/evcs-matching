@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+option java_package = "org.beyene.protocol.tcp.message";
+option java_outer_classname = "Dto";
+option java_multiple_files = true;
+
+// https://stackoverflow.com/questions/52645487/how-to-convert-google-proto-timestamp-to-java-localdate
+
+message Request {
+    string source = 1;
+    string id = 2;
+    double energy = 3;
+    google.protobuf.Timestamp date = 4;
+    int32 window = 5;
+}
+
+message Offer {
+    string source = 1;
+    string id = 2;
+    double price = 3;
+    double energy = 4;
+    google.protobuf.Timestamp date = 5;
+    int32 window = 6;
+}
+
+message ForwardOffer {
+    string source = 1;
+    Offer offer = 2;
+}
+
+message Reservation {
+    string request = 1;
+    string offer = 2;
+}
+
+message ReservationAction {
+    Reservation reservation = 1;
+    Action action = 2;
+    string argument = 3;
+}
+
+message ReservationPaymentOption {
+    Reservation reservation = 1;
+    repeated string options = 2;
+}
+
+enum Action {
+    ACCEPT = 0;
+    REJECT = 1;
+    PAY = 2;
+}
+
+message Message {
+    oneof msg {
+        Request request = 1;
+        Offer offer = 2;
+        ForwardOffer forwardOffer = 3;
+        Reservation reservation = 4;
+        ReservationAction reservationAction = 5;
+        ReservationPaymentOption paymentOptions = 6;
+    }
+}

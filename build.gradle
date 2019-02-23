@@ -1,8 +1,12 @@
-allprojects  {
+allprojects {
     apply plugin: 'maven'
 
     group = 'org.beyene.evcs'
     version = '1.0-SNAPSHOT'
+
+    ext {
+        springBootVersion = '2.1.1.RELEASE'
+    }
 }
 
 subprojects {
@@ -10,19 +14,56 @@ subprojects {
 
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
-  
+
+    compileJava {
+        options.compilerArgs << "-Xlint:all"
+    }
+
     repositories {
         mavenCentral()
     }
 
-    task createPom << {
+    task createPom {
+        doLast {
+            pom {
+                project {
+                    parent {
+                        groupId project.group
+                        artifactId rootProject.name
+                        version project.version
+                        relativePath '../'
+                    }
+                    inceptionYear '2018'
+                    licenses {
+                        license {
+                            name 'The Apache Software License, Version 2.0'
+                            url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                            distribution 'repo'
+                        }
+                    }
+                }
+            }.writeTo("pom.xml")
+        }
+    }
+
+
+}
+
+// parent's pom.xml was written manually to set Java version to 1.8
+/*
+task createPom {
+    doLast {
         pom {
             project {
-                parent {
-                    groupId project.group
-                    artifactId rootProject.name
-                    version project.version
-                    relativePath '../'
+                packaging 'pom'
+                modules {
+                    module 'protocol-api'
+                    module 'protocol-common'
+                    module 'protocol-ledger'
+                    module 'protocol-tcp'
+                    module 'webapp-common'
+                    module 'webapp-cs'
+                    module 'webapp-ev'
                 }
                 inceptionYear '2018'
                 licenses {
@@ -36,28 +77,4 @@ subprojects {
         }.writeTo("pom.xml")
     }
 }
- 
-task createPom << {
-    pom {
-        project {
-            packaging 'pom'
-            modules {
-                module 'protocol-api'
-                module 'protocol-common'
-                module 'protocol-ledger'
-                module 'protocol-tcp'
-                module 'webapp-common'
-                module 'webapp-cs'
-                module 'webapp-ev'
-            }
-            inceptionYear '2018'
-            licenses {
-                license {
-                    name 'The Apache Software License, Version 2.0'
-                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                    distribution 'repo'
-                }
-            }
-        }
-    }.writeTo("pom.xml")
-}
+*/

@@ -1,15 +1,25 @@
 package org.beyene.webapp.cs;
 
+import org.beyene.protocol.api.ApiConfiguration;
+import org.beyene.protocol.api.ApiProvider;
 import org.beyene.protocol.api.CsApi;
-import org.beyene.protocol.tcp.CsApiComponent;
+import org.beyene.protocol.ledger.cs.IotaCsApiProvider;
+import org.beyene.protocol.ledger.cs.IotaCsOptions;
+import org.beyene.protocol.tcp.cs.ZmqCsApiProvider;
+import org.beyene.protocol.tcp.cs.ZmqCsOptions;
+import org.beyene.webapp.cs.stub.StubApiProvider;
+import org.beyene.webapp.cs.stub.StubOptions;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.support.GenericApplicationContext;
 import picocli.CommandLine;
-import picocli.CommandLine.ParameterException;
-import picocli.CommandLine.UnmatchedArgumentException;
 
+import java.util.Arrays;
+import java.util.List;
+
+@ComponentScan("org.beyene.webapp.common.controller")
 @SpringBootApplication
 public class Application {
 
@@ -19,8 +29,12 @@ public class Application {
         cmd.setUsageHelpWidth(120);
 
         try {
-            cmd.parse(args);
-            if (cmd.isUsageHelpRequested()) {
+            List<CommandLine> parsed = cmd.parse(args);
+            if (parsed.size() != 2) {
+                System.err.println("Please specify one subcommand!");
+                cmd.usage(System.out);
+                return;
+            } else if (cmd.isUsageHelpRequested()) {
                 cmd.usage(System.out);
                 return;
             } else if (cmd.isVersionHelpRequested()) {
@@ -28,23 +42,32 @@ public class Application {
                 return;
             }
 
-            new Application().runWith(options);
-        } catch (ParameterException ex) {
+            Object subOptions = parsed.get(1).getCommand();
+            if (ZmqCsOptions.class.isInstance(subOptions))
+                new Application().runWith(new ZmqCsApiProvider(), ZmqCsOptions.class.cast(subOptions));
+            else if (IotaCsOptions.class.isInstance(subOptions))
+                new Application().runWith(new IotaCsApiProvider(), IotaCsOptions.class.cast(subOptions));
+            else if (StubOptions.class.isInstance(subOptions)) {
+                new Application().runWith(new StubApiProvider(), StubOptions.class.cast(subOptions));
+            } else
+                throw new IllegalStateException("subcommand is not supported: " + Arrays.toString(args));
+
+        } catch (CommandLine.ParameterException ex) {
             System.err.println(ex.getMessage());
-            if (!UnmatchedArgumentException.printSuggestions(ex, System.err)) {
+            if (!CommandLine.UnmatchedArgumentException.printSuggestions(ex, System.err)) {
                 ex.getCommandLine().usage(System.err);
             }
         }
     }
 
-    public void runWith(Options options) throws Exception {
+    private <A extends CsApi, T extends ApiConfiguration<? extends A, T>> void runWith(
+            ApiProvider<A, T> provider, T options) {
         SpringApplication application = new SpringApplication(Application.class);
-        registerBeans(application, options);
+        registerBeans(application, provider.newApi(options));
         ConfigurableApplicationContext context = application.run();
     }
 
-    private void registerBeans(SpringApplication application, Options options) {
-        CsApi api = new CsApiComponent();
+    private void registerBeans(SpringApplication application, CsApi api) {
         application.addInitializers((GenericApplicationContext ctx) -> ctx.registerBean(CsApi.class, () -> api));
     }
 

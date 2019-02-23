@@ -1,7 +1,4 @@
 buildscript {
-	ext {
-		springBootVersion = '2.1.1.RELEASE'
-	}
 
 	repositories {
 		mavenCentral()
@@ -12,29 +9,26 @@ buildscript {
 	}
 }
 
-apply plugin: 'java'
-apply plugin: 'eclipse'
+apply plugin: 'application'
+
+// https://github.com/spring-projects/spring-boot/issues/11594
+// don't apply to libraries
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
-group = 'org.beyene.webapp'
-version = '0.0.1-SNAPSHOT'
-sourceCompatibility = 1.8
-
-repositories {
-	mavenCentral()
-}
+mainClassName = 'org.beyene.webapp.cs.Application'
 
 dependencies {
-	implementation project(':protocol-api')
-	implementation project(':protocol-common')
-	implementation project(':protocol-tcp')
-	implementation project(':webapp-common')
-	implementation 'info.picocli:picocli:3.8.2'
-	implementation 'org.springframework.boot:spring-boot-starter-jersey'
-	implementation 'org.springframework:spring-webmvc:5.1.3.RELEASE'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
+	compile project(':protocol-api')
+	compile project(':protocol-common')
+	compile project(':protocol-tcp')
+	compile project(':protocol-ledger')
+	compile project(':webapp-common')
+	compile 'info.picocli:picocli:3.8.2'
+	compile "org.springframework.boot:spring-boot-starter-jersey:${springBootVersion}"
+	compile 'org.springframework:spring-webmvc:5.1.3.RELEASE'
+	compile "org.springframework.boot:spring-boot-starter-web:${springBootVersion}"
 	// allows conditional statements in logback configuration
-	implementation 'org.codehaus.janino:janino:3.0.11'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	compile 'org.codehaus.janino:janino:3.0.11'
+	testCompile "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
 }

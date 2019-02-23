@@ -1,9 +1,9 @@
 rootProject.name = 'parent'
 
 include 'protocol-api'
+include 'protocol-common'
 include 'protocol-ledger'
 include 'protocol-tcp'
 include 'webapp-ev'
 include 'webapp-cs'
-include 'protocol-common'
 include 'webapp-common'

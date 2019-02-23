@@ -1,16 +1,4 @@
-apply plugin: 'java'
-apply plugin: 'eclipse'
-
-group = 'org.beyene.protocol'
-version = '0.0.1-SNAPSHOT'
-
 description = 'protocol-api'
-
-sourceCompatibility = 1.8
-
-repositories {
-    mavenCentral()
-}
 
 dependencies {
     compile project(':protocol-common')

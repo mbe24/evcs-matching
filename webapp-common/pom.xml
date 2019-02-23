@@ -3,9 +3,10 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <artifactId>parent</artifactId>
     <groupId>org.beyene.evcs</groupId>
+    <artifactId>parent</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <relativePath>../</relativePath>
   </parent>
   <groupId>org.beyene.evcs</groupId>
   <artifactId>webapp-common</artifactId>
@@ -19,6 +20,12 @@
     </license>
   </licenses>
   <dependencies>
+    <dependency>
+      <groupId>info.picocli</groupId>
+      <artifactId>picocli</artifactId>
+      <version>3.8.2</version>
+      <scope>compile</scope>
+    </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>

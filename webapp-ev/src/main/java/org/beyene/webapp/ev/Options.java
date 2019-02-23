@@ -1,15 +1,16 @@
 package org.beyene.webapp.ev;
 
-import org.beyene.webapp.common.EndpointConverter;
+import org.beyene.protocol.ledger.ev.IotaEvOptions;
+import org.beyene.protocol.tcp.ev.ZmqEvOptions;
+import org.beyene.webapp.ev.stub.StubOptions;
 import picocli.CommandLine;
 
-import java.util.List;
-
-@CommandLine.Command(name = "java -jar webapp-ev.jar", mixinStandardHelpOptions = true, version = "webapp-ev 1.0-SNAPSHOT")
+@CommandLine.Command(
+        name = "java -jar webapp-ev.jar",
+        mixinStandardHelpOptions = true,
+        version = "webapp-ev 1.0-SNAPSHOT",
+        subcommands = {ZmqEvOptions.class, IotaEvOptions.class, StubOptions.class}
+)
 public class Options {
-
-    @CommandLine.Option(names = {"-e", "--endpoint"}, required = true, arity = "1", split = ",", description = "Define ZMQ endpoints. " +
-            "Only the tcp protocol is supported.", converter = EndpointConverter.class)
-    List<String> endpoints;
 
 }
