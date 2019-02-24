@@ -27,6 +27,7 @@ class RequestView extends React.Component {
   // https://daveceddia.com/where-fetch-data-redux/
   componentWillReceiveProps(nextProps) {
     let requests = nextProps.requests;
+    console.log('requests=' + JSON.stringify(requests));
     if (requests == null || requests.length === 0) return;
 
     let lastId = requests[requests.length - 1].id;
@@ -46,6 +47,8 @@ class RequestView extends React.Component {
   }
 
   handleClick(event) {
+    console.log('clicked=' + event.currentTarget.dataset);
+
     let id = event.currentTarget.dataset.id;
     if (id === this.state.activeItem) id = -1;
     this.setState({ ...this.state, activeItem: id });

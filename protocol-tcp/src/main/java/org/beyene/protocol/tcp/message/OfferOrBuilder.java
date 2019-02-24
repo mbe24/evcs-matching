@@ -18,40 +18,50 @@ public interface OfferOrBuilder extends
       getSourceBytes();
 
   /**
-   * <code>string id = 2;</code>
+   * <code>string requestId = 2;</code>
+   */
+  java.lang.String getRequestId();
+  /**
+   * <code>string requestId = 2;</code>
+   */
+  com.google.protobuf.ByteString
+      getRequestIdBytes();
+
+  /**
+   * <code>string id = 3;</code>
    */
   java.lang.String getId();
   /**
-   * <code>string id = 2;</code>
+   * <code>string id = 3;</code>
    */
   com.google.protobuf.ByteString
       getIdBytes();
 
   /**
-   * <code>double price = 3;</code>
+   * <code>double price = 4;</code>
    */
   double getPrice();
 
   /**
-   * <code>double energy = 4;</code>
+   * <code>double energy = 5;</code>
    */
   double getEnergy();
 
   /**
-   * <code>.google.protobuf.Timestamp date = 5;</code>
+   * <code>.google.protobuf.Timestamp date = 6;</code>
    */
   boolean hasDate();
   /**
-   * <code>.google.protobuf.Timestamp date = 5;</code>
+   * <code>.google.protobuf.Timestamp date = 6;</code>
    */
   com.google.protobuf.Timestamp getDate();
   /**
-   * <code>.google.protobuf.Timestamp date = 5;</code>
+   * <code>.google.protobuf.Timestamp date = 6;</code>
    */
   com.google.protobuf.TimestampOrBuilder getDateOrBuilder();
 
   /**
-   * <code>int32 window = 6;</code>
+   * <code>int32 window = 7;</code>
    */
   int getWindow();
 }

@@ -30,17 +30,22 @@ class OfferView extends React.Component {
 
   // https://daveceddia.com/where-fetch-data-redux/
   componentWillReceiveProps(nextProps) {
+    console.log('nextProps=' + JSON.stringify(nextProps));
     let data = this.state.data;
     let latestData = nextProps.latestData;
 
     if (latestData != null) {
       let requestId = latestData.requestId;
-      let offers = latestData.offers;
-      let lastId = offers[offers.length - 1].id;
+      let latestOffers = latestData.offers;
 
       let offersForRequest = [];
       let requestData = data[requestId];
       if (requestData != null) offersForRequest = requestData.offers;
+
+      let offers = [...offersForRequest, ...latestOffers];
+
+      let lastId = -1;
+      if (offers.length > 0) lastId = offers[offers.length - 1].id;
 
       data[requestId] = {
         offers: [...offersForRequest, ...offers],

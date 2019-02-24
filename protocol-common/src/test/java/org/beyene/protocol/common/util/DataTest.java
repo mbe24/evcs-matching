@@ -1,6 +1,5 @@
-package org.beyene.webapp.common;
+package org.beyene.protocol.common.util;
 
-import org.beyene.webapp.common.util.Data;
 import org.junit.Assert;
 import org.junit.Test;
 

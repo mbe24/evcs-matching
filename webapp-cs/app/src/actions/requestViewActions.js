@@ -6,7 +6,9 @@ export const setRequestActive = (request, active) => ({
 });
 
 export const fetchRequests = lastRequestId => dispatch =>
-  fetch('/app/api/v1/requests/load?lastId=' + lastRequestId)
+  fetch(
+    'http://localhost:9000/app/api/v1/requests/load?lastId=' + lastRequestId
+  )
     .then(response => response.json())
     .then(requests => {
       dispatch({ type: ACTION.FETCH_REQUEST, payload: requests });

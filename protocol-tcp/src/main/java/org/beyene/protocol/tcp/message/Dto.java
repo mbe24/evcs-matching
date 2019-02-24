@@ -61,26 +61,27 @@ public final class Dto {
       "\n\ndtos.proto\032\037google/protobuf/timestamp." +
       "proto\"o\n\007Request\022\016\n\006source\030\001 \001(\t\022\n\n\002id\030\002" +
       " \001(\t\022\016\n\006energy\030\003 \001(\001\022(\n\004date\030\004 \001(\0132\032.goo" +
-      "gle.protobuf.Timestamp\022\016\n\006window\030\005 \001(\005\"|" +
-      "\n\005Offer\022\016\n\006source\030\001 \001(\t\022\n\n\002id\030\002 \001(\t\022\r\n\005p" +
-      "rice\030\003 \001(\001\022\016\n\006energy\030\004 \001(\001\022(\n\004date\030\005 \001(\013" +
-      "2\032.google.protobuf.Timestamp\022\016\n\006window\030\006" +
-      " \001(\005\"5\n\014ForwardOffer\022\016\n\006source\030\001 \001(\t\022\025\n\005" +
-      "offer\030\002 \001(\0132\006.Offer\"-\n\013Reservation\022\017\n\007re" +
-      "quest\030\001 \001(\t\022\r\n\005offer\030\002 \001(\t\"a\n\021Reservatio" +
-      "nAction\022!\n\013reservation\030\001 \001(\0132\014.Reservati" +
-      "on\022\027\n\006action\030\002 \001(\0162\007.Action\022\020\n\010argument\030" +
-      "\003 \001(\t\"N\n\030ReservationPaymentOption\022!\n\013res" +
-      "ervation\030\001 \001(\0132\014.Reservation\022\017\n\007options\030" +
-      "\002 \003(\t\"\370\001\n\007Message\022\033\n\007request\030\001 \001(\0132\010.Req" +
-      "uestH\000\022\027\n\005offer\030\002 \001(\0132\006.OfferH\000\022%\n\014forwa" +
-      "rdOffer\030\003 \001(\0132\r.ForwardOfferH\000\022#\n\013reserv" +
-      "ation\030\004 \001(\0132\014.ReservationH\000\022/\n\021reservati" +
-      "onAction\030\005 \001(\0132\022.ReservationActionH\000\0223\n\016" +
-      "paymentOptions\030\006 \001(\0132\031.ReservationPaymen" +
-      "tOptionH\000B\005\n\003msg*)\n\006Action\022\n\n\006ACCEPT\020\000\022\n" +
-      "\n\006REJECT\020\001\022\007\n\003PAY\020\002B(\n\037org.beyene.protoc" +
-      "ol.tcp.messageB\003DtoP\001b\006proto3"
+      "gle.protobuf.Timestamp\022\016\n\006window\030\005 \001(\005\"\217" +
+      "\001\n\005Offer\022\016\n\006source\030\001 \001(\t\022\021\n\trequestId\030\002 " +
+      "\001(\t\022\n\n\002id\030\003 \001(\t\022\r\n\005price\030\004 \001(\001\022\016\n\006energy" +
+      "\030\005 \001(\001\022(\n\004date\030\006 \001(\0132\032.google.protobuf.T" +
+      "imestamp\022\016\n\006window\030\007 \001(\005\"5\n\014ForwardOffer" +
+      "\022\016\n\006source\030\001 \001(\t\022\025\n\005offer\030\002 \001(\0132\006.Offer\"" +
+      "-\n\013Reservation\022\017\n\007request\030\001 \001(\t\022\r\n\005offer" +
+      "\030\002 \001(\t\"a\n\021ReservationAction\022!\n\013reservati" +
+      "on\030\001 \001(\0132\014.Reservation\022\027\n\006action\030\002 \001(\0162\007" +
+      ".Action\022\020\n\010argument\030\003 \001(\t\"N\n\030Reservation" +
+      "PaymentOption\022!\n\013reservation\030\001 \001(\0132\014.Res" +
+      "ervation\022\017\n\007options\030\002 \003(\t\"\370\001\n\007Message\022\033\n" +
+      "\007request\030\001 \001(\0132\010.RequestH\000\022\027\n\005offer\030\002 \001(" +
+      "\0132\006.OfferH\000\022%\n\014forwardOffer\030\003 \001(\0132\r.Forw" +
+      "ardOfferH\000\022#\n\013reservation\030\004 \001(\0132\014.Reserv" +
+      "ationH\000\022/\n\021reservationAction\030\005 \001(\0132\022.Res" +
+      "ervationActionH\000\0223\n\016paymentOptions\030\006 \001(\013" +
+      "2\031.ReservationPaymentOptionH\000B\005\n\003msg*)\n\006" +
+      "Action\022\n\n\006ACCEPT\020\000\022\n\n\006REJECT\020\001\022\007\n\003PAY\020\002B" +
+      "(\n\037org.beyene.protocol.tcp.messageB\003DtoP" +
+      "\001b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -106,7 +107,7 @@ public final class Dto {
     internal_static_Offer_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_Offer_descriptor,
-        new java.lang.String[] { "Source", "Id", "Price", "Energy", "Date", "Window", });
+        new java.lang.String[] { "Source", "RequestId", "Id", "Price", "Energy", "Date", "Window", });
     internal_static_ForwardOffer_descriptor =
       getDescriptor().getMessageTypes().get(2);
     internal_static_ForwardOffer_fieldAccessorTable = new

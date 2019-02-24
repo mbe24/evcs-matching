@@ -18,11 +18,12 @@ message Request {
 
 message Offer {
     string source = 1;
-    string id = 2;
-    double price = 3;
-    double energy = 4;
-    google.protobuf.Timestamp date = 5;
-    int32 window = 6;
+    string requestId = 2;
+    string id = 3;
+    double price = 4;
+    double energy = 5;
+    google.protobuf.Timestamp date = 6;
+    int32 window = 7;
 }
 
 message ForwardOffer {

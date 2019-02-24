@@ -17,6 +17,7 @@ private static final long serialVersionUID = 0L;
   }
   private Offer() {
     source_ = "";
+    requestId_ = "";
     id_ = "";
   }
 
@@ -53,20 +54,26 @@ private static final long serialVersionUID = 0L;
           case 18: {
             java.lang.String s = input.readStringRequireUtf8();
 
-            id_ = s;
+            requestId_ = s;
             break;
           }
-          case 25: {
+          case 26: {
+            java.lang.String s = input.readStringRequireUtf8();
 
-            price_ = input.readDouble();
+            id_ = s;
             break;
           }
           case 33: {
 
+            price_ = input.readDouble();
+            break;
+          }
+          case 41: {
+
             energy_ = input.readDouble();
             break;
           }
-          case 42: {
+          case 50: {
             com.google.protobuf.Timestamp.Builder subBuilder = null;
             if (date_ != null) {
               subBuilder = date_.toBuilder();
@@ -79,7 +86,7 @@ private static final long serialVersionUID = 0L;
 
             break;
           }
-          case 48: {
+          case 56: {
 
             window_ = input.readInt32();
             break;
@@ -150,10 +157,44 @@ private static final long serialVersionUID = 0L;
     }
   }
 
-  public static final int ID_FIELD_NUMBER = 2;
+  public static final int REQUESTID_FIELD_NUMBER = 2;
+  private volatile java.lang.Object requestId_;
+  /**
+   * <code>string requestId = 2;</code>
+   */
+  public java.lang.String getRequestId() {
+    java.lang.Object ref = requestId_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs = 
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      requestId_ = s;
+      return s;
+    }
+  }
+  /**
+   * <code>string requestId = 2;</code>
+   */
+  public com.google.protobuf.ByteString
+      getRequestIdBytes() {
+    java.lang.Object ref = requestId_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      requestId_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
+  public static final int ID_FIELD_NUMBER = 3;
   private volatile java.lang.Object id_;
   /**
-   * <code>string id = 2;</code>
+   * <code>string id = 3;</code>
    */
   public java.lang.String getId() {
     java.lang.Object ref = id_;
@@ -168,7 +209,7 @@ private static final long serialVersionUID = 0L;
     }
   }
   /**
-   * <code>string id = 2;</code>
+   * <code>string id = 3;</code>
    */
   public com.google.protobuf.ByteString
       getIdBytes() {
@@ -184,49 +225,49 @@ private static final long serialVersionUID = 0L;
     }
   }
 
-  public static final int PRICE_FIELD_NUMBER = 3;
+  public static final int PRICE_FIELD_NUMBER = 4;
   private double price_;
   /**
-   * <code>double price = 3;</code>
+   * <code>double price = 4;</code>
    */
   public double getPrice() {
     return price_;
   }
 
-  public static final int ENERGY_FIELD_NUMBER = 4;
+  public static final int ENERGY_FIELD_NUMBER = 5;
   private double energy_;
   /**
-   * <code>double energy = 4;</code>
+   * <code>double energy = 5;</code>
    */
   public double getEnergy() {
     return energy_;
   }
 
-  public static final int DATE_FIELD_NUMBER = 5;
+  public static final int DATE_FIELD_NUMBER = 6;
   private com.google.protobuf.Timestamp date_;
   /**
-   * <code>.google.protobuf.Timestamp date = 5;</code>
+   * <code>.google.protobuf.Timestamp date = 6;</code>
    */
   public boolean hasDate() {
     return date_ != null;
   }
   /**
-   * <code>.google.protobuf.Timestamp date = 5;</code>
+   * <code>.google.protobuf.Timestamp date = 6;</code>
    */
   public com.google.protobuf.Timestamp getDate() {
     return date_ == null ? com.google.protobuf.Timestamp.getDefaultInstance() : date_;
   }
   /**
-   * <code>.google.protobuf.Timestamp date = 5;</code>
+   * <code>.google.protobuf.Timestamp date = 6;</code>
    */
   public com.google.protobuf.TimestampOrBuilder getDateOrBuilder() {
     return getDate();
   }
 
-  public static final int WINDOW_FIELD_NUMBER = 6;
+  public static final int WINDOW_FIELD_NUMBER = 7;
   private int window_;
   /**
-   * <code>int32 window = 6;</code>
+   * <code>int32 window = 7;</code>
    */
   public int getWindow() {
     return window_;
@@ -249,20 +290,23 @@ private static final long serialVersionUID = 0L;
     if (!getSourceBytes().isEmpty()) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 1, source_);
     }
+    if (!getRequestIdBytes().isEmpty()) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, requestId_);
+    }
     if (!getIdBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, id_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 3, id_);
     }
     if (price_ != 0D) {
-      output.writeDouble(3, price_);
+      output.writeDouble(4, price_);
     }
     if (energy_ != 0D) {
-      output.writeDouble(4, energy_);
+      output.writeDouble(5, energy_);
     }
     if (date_ != null) {
-      output.writeMessage(5, getDate());
+      output.writeMessage(6, getDate());
     }
     if (window_ != 0) {
-      output.writeInt32(6, window_);
+      output.writeInt32(7, window_);
     }
     unknownFields.writeTo(output);
   }
@@ -276,24 +320,27 @@ private static final long serialVersionUID = 0L;
     if (!getSourceBytes().isEmpty()) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, source_);
     }
+    if (!getRequestIdBytes().isEmpty()) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, requestId_);
+    }
     if (!getIdBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, id_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, id_);
     }
     if (price_ != 0D) {
       size += com.google.protobuf.CodedOutputStream
-        .computeDoubleSize(3, price_);
+        .computeDoubleSize(4, price_);
     }
     if (energy_ != 0D) {
       size += com.google.protobuf.CodedOutputStream
-        .computeDoubleSize(4, energy_);
+        .computeDoubleSize(5, energy_);
     }
     if (date_ != null) {
       size += com.google.protobuf.CodedOutputStream
-        .computeMessageSize(5, getDate());
+        .computeMessageSize(6, getDate());
     }
     if (window_ != 0) {
       size += com.google.protobuf.CodedOutputStream
-        .computeInt32Size(6, window_);
+        .computeInt32Size(7, window_);
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -312,6 +359,8 @@ private static final long serialVersionUID = 0L;
 
     if (!getSource()
         .equals(other.getSource())) return false;
+    if (!getRequestId()
+        .equals(other.getRequestId())) return false;
     if (!getId()
         .equals(other.getId())) return false;
     if (java.lang.Double.doubleToLongBits(getPrice())
@@ -340,6 +389,8 @@ private static final long serialVersionUID = 0L;
     hash = (19 * hash) + getDescriptor().hashCode();
     hash = (37 * hash) + SOURCE_FIELD_NUMBER;
     hash = (53 * hash) + getSource().hashCode();
+    hash = (37 * hash) + REQUESTID_FIELD_NUMBER;
+    hash = (53 * hash) + getRequestId().hashCode();
     hash = (37 * hash) + ID_FIELD_NUMBER;
     hash = (53 * hash) + getId().hashCode();
     hash = (37 * hash) + PRICE_FIELD_NUMBER;
@@ -489,6 +540,8 @@ private static final long serialVersionUID = 0L;
       super.clear();
       source_ = "";
 
+      requestId_ = "";
+
       id_ = "";
 
       price_ = 0D;
@@ -530,6 +583,7 @@ private static final long serialVersionUID = 0L;
     public org.beyene.protocol.tcp.message.Offer buildPartial() {
       org.beyene.protocol.tcp.message.Offer result = new org.beyene.protocol.tcp.message.Offer(this);
       result.source_ = source_;
+      result.requestId_ = requestId_;
       result.id_ = id_;
       result.price_ = price_;
       result.energy_ = energy_;
@@ -589,6 +643,10 @@ private static final long serialVersionUID = 0L;
       if (other == org.beyene.protocol.tcp.message.Offer.getDefaultInstance()) return this;
       if (!other.getSource().isEmpty()) {
         source_ = other.source_;
+        onChanged();
+      }
+      if (!other.getRequestId().isEmpty()) {
+        requestId_ = other.requestId_;
         onChanged();
       }
       if (!other.getId().isEmpty()) {
@@ -705,9 +763,78 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
+    private java.lang.Object requestId_ = "";
+    /**
+     * <code>string requestId = 2;</code>
+     */
+    public java.lang.String getRequestId() {
+      java.lang.Object ref = requestId_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        requestId_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
+    }
+    /**
+     * <code>string requestId = 2;</code>
+     */
+    public com.google.protobuf.ByteString
+        getRequestIdBytes() {
+      java.lang.Object ref = requestId_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        requestId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>string requestId = 2;</code>
+     */
+    public Builder setRequestId(
+        java.lang.String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  
+      requestId_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string requestId = 2;</code>
+     */
+    public Builder clearRequestId() {
+      
+      requestId_ = getDefaultInstance().getRequestId();
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string requestId = 2;</code>
+     */
+    public Builder setRequestIdBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+      
+      requestId_ = value;
+      onChanged();
+      return this;
+    }
+
     private java.lang.Object id_ = "";
     /**
-     * <code>string id = 2;</code>
+     * <code>string id = 3;</code>
      */
     public java.lang.String getId() {
       java.lang.Object ref = id_;
@@ -722,7 +849,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string id = 2;</code>
+     * <code>string id = 3;</code>
      */
     public com.google.protobuf.ByteString
         getIdBytes() {
@@ -738,7 +865,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string id = 2;</code>
+     * <code>string id = 3;</code>
      */
     public Builder setId(
         java.lang.String value) {
@@ -751,7 +878,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>string id = 2;</code>
+     * <code>string id = 3;</code>
      */
     public Builder clearId() {
       
@@ -760,7 +887,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>string id = 2;</code>
+     * <code>string id = 3;</code>
      */
     public Builder setIdBytes(
         com.google.protobuf.ByteString value) {
@@ -776,13 +903,13 @@ private static final long serialVersionUID = 0L;
 
     private double price_ ;
     /**
-     * <code>double price = 3;</code>
+     * <code>double price = 4;</code>
      */
     public double getPrice() {
       return price_;
     }
     /**
-     * <code>double price = 3;</code>
+     * <code>double price = 4;</code>
      */
     public Builder setPrice(double value) {
       
@@ -791,7 +918,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>double price = 3;</code>
+     * <code>double price = 4;</code>
      */
     public Builder clearPrice() {
       
@@ -802,13 +929,13 @@ private static final long serialVersionUID = 0L;
 
     private double energy_ ;
     /**
-     * <code>double energy = 4;</code>
+     * <code>double energy = 5;</code>
      */
     public double getEnergy() {
       return energy_;
     }
     /**
-     * <code>double energy = 4;</code>
+     * <code>double energy = 5;</code>
      */
     public Builder setEnergy(double value) {
       
@@ -817,7 +944,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>double energy = 4;</code>
+     * <code>double energy = 5;</code>
      */
     public Builder clearEnergy() {
       
@@ -830,13 +957,13 @@ private static final long serialVersionUID = 0L;
     private com.google.protobuf.SingleFieldBuilderV3<
         com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder> dateBuilder_;
     /**
-     * <code>.google.protobuf.Timestamp date = 5;</code>
+     * <code>.google.protobuf.Timestamp date = 6;</code>
      */
     public boolean hasDate() {
       return dateBuilder_ != null || date_ != null;
     }
     /**
-     * <code>.google.protobuf.Timestamp date = 5;</code>
+     * <code>.google.protobuf.Timestamp date = 6;</code>
      */
     public com.google.protobuf.Timestamp getDate() {
       if (dateBuilder_ == null) {
@@ -846,7 +973,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>.google.protobuf.Timestamp date = 5;</code>
+     * <code>.google.protobuf.Timestamp date = 6;</code>
      */
     public Builder setDate(com.google.protobuf.Timestamp value) {
       if (dateBuilder_ == null) {
@@ -862,7 +989,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>.google.protobuf.Timestamp date = 5;</code>
+     * <code>.google.protobuf.Timestamp date = 6;</code>
      */
     public Builder setDate(
         com.google.protobuf.Timestamp.Builder builderForValue) {
@@ -876,7 +1003,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>.google.protobuf.Timestamp date = 5;</code>
+     * <code>.google.protobuf.Timestamp date = 6;</code>
      */
     public Builder mergeDate(com.google.protobuf.Timestamp value) {
       if (dateBuilder_ == null) {
@@ -894,7 +1021,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>.google.protobuf.Timestamp date = 5;</code>
+     * <code>.google.protobuf.Timestamp date = 6;</code>
      */
     public Builder clearDate() {
       if (dateBuilder_ == null) {
@@ -908,7 +1035,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>.google.protobuf.Timestamp date = 5;</code>
+     * <code>.google.protobuf.Timestamp date = 6;</code>
      */
     public com.google.protobuf.Timestamp.Builder getDateBuilder() {
       
@@ -916,7 +1043,7 @@ private static final long serialVersionUID = 0L;
       return getDateFieldBuilder().getBuilder();
     }
     /**
-     * <code>.google.protobuf.Timestamp date = 5;</code>
+     * <code>.google.protobuf.Timestamp date = 6;</code>
      */
     public com.google.protobuf.TimestampOrBuilder getDateOrBuilder() {
       if (dateBuilder_ != null) {
@@ -927,7 +1054,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>.google.protobuf.Timestamp date = 5;</code>
+     * <code>.google.protobuf.Timestamp date = 6;</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
         com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder> 
@@ -945,13 +1072,13 @@ private static final long serialVersionUID = 0L;
 
     private int window_ ;
     /**
-     * <code>int32 window = 6;</code>
+     * <code>int32 window = 7;</code>
      */
     public int getWindow() {
       return window_;
     }
     /**
-     * <code>int32 window = 6;</code>
+     * <code>int32 window = 7;</code>
      */
     public Builder setWindow(int value) {
       
@@ -960,7 +1087,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>int32 window = 6;</code>
+     * <code>int32 window = 7;</code>
      */
     public Builder clearWindow() {
       

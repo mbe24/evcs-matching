@@ -31,8 +31,8 @@ public class IotaCsApi implements CsApi {
     }
 
     @Override
-    public void submitOffer(String requestId, CsOffer offer) {
-
+    public CsOffer submitOffer(String requestId, CsOffer offer) {
+        return null;
     }
 
     @Override

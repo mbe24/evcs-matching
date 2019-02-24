@@ -9,7 +9,6 @@ import org.beyene.protocol.common.dto.EvRequest;
 import org.beyene.protocol.common.util.Data;
 import org.springframework.core.style.ToStringCreator;
 
-import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -83,7 +82,7 @@ class StubCsApi implements CsApi {
     }
 
     @Override
-    public void submitOffer(String requestId, CsOffer offer) {
+    public CsOffer submitOffer(String requestId, CsOffer offer) {
         OptionalInt index = Data.indexOf(requests, requestId, req -> req.id);
 
         if (!index.isPresent())
@@ -107,6 +106,7 @@ class StubCsApi implements CsApi {
             offersByRequest.put(requestId, offers = new ArrayList<>());
 
         offers.add(offer);
+        return offer;
     }
 
     @Override

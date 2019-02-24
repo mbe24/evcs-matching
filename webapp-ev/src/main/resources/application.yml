@@ -11,7 +11,7 @@ logging:
   config: "classpath:log-config.xml"
 
 server:
-  port: "8080"
+  port: "8000"
   servlet:
     # https://www.baeldung.com/spring-boot-context-path
     context-path: "/app"

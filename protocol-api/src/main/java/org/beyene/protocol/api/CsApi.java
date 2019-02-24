@@ -24,7 +24,7 @@ public interface CsApi extends Closeable {
 
     void updateReservation(String id, Operation op);
 
-    void submitOffer(String requestId, CsOffer offer);
+    CsOffer submitOffer(String requestId, CsOffer offer);
 
     List<CsOffer> getOffers(String requestId, String lastId);
 

@@ -1,11 +1,10 @@
-package org.beyene.protocol.common.util;
+package org.beyene.protocol.common.cmd;
 
 import picocli.CommandLine;
 
 import java.util.List;
 
-@CommandLine.Command
-public class CsOptions {
+public class CsBaseOptions {
 
     @CommandLine.Option(names = {"-po", "--payment-option"}, required = true, arity = "1", split = ",",
             description = "Define supported payment options")

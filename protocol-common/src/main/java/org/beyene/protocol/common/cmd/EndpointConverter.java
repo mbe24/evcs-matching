@@ -1,4 +1,4 @@
-package org.beyene.protocol.common.util;
+package org.beyene.protocol.common.cmd;
 
 import picocli.CommandLine;
 import java.util.regex.Pattern;
