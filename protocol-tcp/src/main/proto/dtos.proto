@@ -32,8 +32,10 @@ message ForwardOffer {
 }
 
 message Reservation {
-    string request = 1;
-    string offer = 2;
+    string source = 1;
+    string id = 2;
+    string request = 3;
+    string offer = 4;
 }
 
 message ReservationAction {

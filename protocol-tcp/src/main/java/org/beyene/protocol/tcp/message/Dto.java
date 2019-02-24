@@ -67,21 +67,21 @@ public final class Dto {
       "\030\005 \001(\001\022(\n\004date\030\006 \001(\0132\032.google.protobuf.T" +
       "imestamp\022\016\n\006window\030\007 \001(\005\"5\n\014ForwardOffer" +
       "\022\016\n\006source\030\001 \001(\t\022\025\n\005offer\030\002 \001(\0132\006.Offer\"" +
-      "-\n\013Reservation\022\017\n\007request\030\001 \001(\t\022\r\n\005offer" +
-      "\030\002 \001(\t\"a\n\021ReservationAction\022!\n\013reservati" +
-      "on\030\001 \001(\0132\014.Reservation\022\027\n\006action\030\002 \001(\0162\007" +
-      ".Action\022\020\n\010argument\030\003 \001(\t\"N\n\030Reservation" +
-      "PaymentOption\022!\n\013reservation\030\001 \001(\0132\014.Res" +
-      "ervation\022\017\n\007options\030\002 \003(\t\"\370\001\n\007Message\022\033\n" +
-      "\007request\030\001 \001(\0132\010.RequestH\000\022\027\n\005offer\030\002 \001(" +
-      "\0132\006.OfferH\000\022%\n\014forwardOffer\030\003 \001(\0132\r.Forw" +
-      "ardOfferH\000\022#\n\013reservation\030\004 \001(\0132\014.Reserv" +
-      "ationH\000\022/\n\021reservationAction\030\005 \001(\0132\022.Res" +
-      "ervationActionH\000\0223\n\016paymentOptions\030\006 \001(\013" +
-      "2\031.ReservationPaymentOptionH\000B\005\n\003msg*)\n\006" +
-      "Action\022\n\n\006ACCEPT\020\000\022\n\n\006REJECT\020\001\022\007\n\003PAY\020\002B" +
-      "(\n\037org.beyene.protocol.tcp.messageB\003DtoP" +
-      "\001b\006proto3"
+      "I\n\013Reservation\022\016\n\006source\030\001 \001(\t\022\n\n\002id\030\002 \001" +
+      "(\t\022\017\n\007request\030\003 \001(\t\022\r\n\005offer\030\004 \001(\t\"a\n\021Re" +
+      "servationAction\022!\n\013reservation\030\001 \001(\0132\014.R" +
+      "eservation\022\027\n\006action\030\002 \001(\0162\007.Action\022\020\n\010a" +
+      "rgument\030\003 \001(\t\"N\n\030ReservationPaymentOptio" +
+      "n\022!\n\013reservation\030\001 \001(\0132\014.Reservation\022\017\n\007" +
+      "options\030\002 \003(\t\"\370\001\n\007Message\022\033\n\007request\030\001 \001" +
+      "(\0132\010.RequestH\000\022\027\n\005offer\030\002 \001(\0132\006.OfferH\000\022" +
+      "%\n\014forwardOffer\030\003 \001(\0132\r.ForwardOfferH\000\022#" +
+      "\n\013reservation\030\004 \001(\0132\014.ReservationH\000\022/\n\021r" +
+      "eservationAction\030\005 \001(\0132\022.ReservationActi" +
+      "onH\000\0223\n\016paymentOptions\030\006 \001(\0132\031.Reservati" +
+      "onPaymentOptionH\000B\005\n\003msg*)\n\006Action\022\n\n\006AC" +
+      "CEPT\020\000\022\n\n\006REJECT\020\001\022\007\n\003PAY\020\002B(\n\037org.beyen" +
+      "e.protocol.tcp.messageB\003DtoP\001b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -119,7 +119,7 @@ public final class Dto {
     internal_static_Reservation_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_Reservation_descriptor,
-        new java.lang.String[] { "Request", "Offer", });
+        new java.lang.String[] { "Source", "Id", "Request", "Offer", });
     internal_static_ReservationAction_descriptor =
       getDescriptor().getMessageTypes().get(4);
     internal_static_ReservationAction_fieldAccessorTable = new

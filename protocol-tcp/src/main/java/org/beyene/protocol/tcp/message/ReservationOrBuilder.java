@@ -8,21 +8,41 @@ public interface ReservationOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>string request = 1;</code>
+   * <code>string source = 1;</code>
+   */
+  java.lang.String getSource();
+  /**
+   * <code>string source = 1;</code>
+   */
+  com.google.protobuf.ByteString
+      getSourceBytes();
+
+  /**
+   * <code>string id = 2;</code>
+   */
+  java.lang.String getId();
+  /**
+   * <code>string id = 2;</code>
+   */
+  com.google.protobuf.ByteString
+      getIdBytes();
+
+  /**
+   * <code>string request = 3;</code>
    */
   java.lang.String getRequest();
   /**
-   * <code>string request = 1;</code>
+   * <code>string request = 3;</code>
    */
   com.google.protobuf.ByteString
       getRequestBytes();
 
   /**
-   * <code>string offer = 2;</code>
+   * <code>string offer = 4;</code>
    */
   java.lang.String getOffer();
   /**
-   * <code>string offer = 2;</code>
+   * <code>string offer = 4;</code>
    */
   com.google.protobuf.ByteString
       getOfferBytes();

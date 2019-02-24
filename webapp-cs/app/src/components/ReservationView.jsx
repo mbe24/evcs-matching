@@ -77,6 +77,7 @@ class ReservationView extends React.Component {
           data-id={i}
           onClick={this.handleClick}
         >
+          <td>{item.id}</td>
           <td>{item.requestId}</td>
           <td>{item.offerId}</td>
           <td>{item.price}</td>
@@ -149,6 +150,7 @@ class ReservationView extends React.Component {
           <Table responsive striped hover>
             <thead>
               <tr>
+                <th className="text-center">ID</th>
                 <th className="text-center">Request</th>
                 <th className="text-center">Offer</th>
                 <th className="text-center">Price</th>

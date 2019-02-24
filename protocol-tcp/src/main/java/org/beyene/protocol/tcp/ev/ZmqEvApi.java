@@ -5,6 +5,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.beyene.protocol.api.EvApi;
 import org.beyene.protocol.common.dto.CsOffer;
+import org.beyene.protocol.common.dto.CsReservation;
 import org.beyene.protocol.common.dto.EvRequest;
 import org.beyene.protocol.common.dto.EvReservation;
 import org.beyene.protocol.common.util.Data;
@@ -39,8 +40,12 @@ class ZmqEvApi implements EvApi, MessageHandler {
     private final ExecutorService executor;
 
     private final List<EvRequest> requests = new CopyOnWriteArrayList<>();
-    private final List<EvReservation> reservations = new CopyOnWriteArrayList<>();
     private final Map<String, List<CsOffer>> offersByRequest = new ConcurrentHashMap<>();
+    private final Map<String, String> addressesByOffer = new ConcurrentHashMap<>();
+
+    private final List<EvReservation> reservations = new CopyOnWriteArrayList<>();
+    private final List<EvReservation> awaitingPayment = new CopyOnWriteArrayList<>();
+    private final Map<String, List<String>> paymentByReservation = new ConcurrentHashMap<>();
 
     public ZmqEvApi(ZmqEvOptions configuration) {
         this.name = configuration.name;
@@ -74,7 +79,6 @@ class ZmqEvApi implements EvApi, MessageHandler {
 
     @Override
     public void handle(MetaMessage m) {
-        logger.info("handle=" + m);
         Message message = m.message;
         String addressee = m.addressee;
 
@@ -113,6 +117,7 @@ class ZmqEvApi implements EvApi, MessageHandler {
             offersByRequest.put(requestId, offers = new CopyOnWriteArrayList<>());
 
         offers.add(csOffer);
+        addressesByOffer.put(csOffer.id, addressee);
 
         ForwardOffer forwardOffer = ForwardOffer.newBuilder()
                 .setOffer(offer)
@@ -125,9 +130,56 @@ class ZmqEvApi implements EvApi, MessageHandler {
     }
 
     private void handleReservationAction(String addressee, ReservationAction reservationAction) {
+        logger.info("Handling reservation action");
+
+        Reservation reservation = reservationAction.getReservation();
+        String requestId = reservation.getRequest();
+        String offerId = reservation.getOffer();
+
+        OptionalInt rIndex = Data.indexOf(requests, requestId, r -> r.id);
+        if (!rIndex.isPresent()) {
+            throw new IllegalStateException("no request with id: " + requestId);
+        }
+        List<CsOffer> offers = offersByRequest.get(requestId);
+
+        OptionalInt oIndex = Data.indexOf(offers, offerId, o -> o.id);
+        if (!oIndex.isPresent()) {
+            throw new IllegalStateException("no offer with id: " + offerId);
+        }
+
+        CsOffer offer = offers.get(oIndex.getAsInt());
+        EvReservation evReservation = new EvReservation();
+        evReservation.id = reservation.getId();
+        evReservation.offerId = offer.id;
+        evReservation.requestId = requestId;
+
+        Action action = reservationAction.getAction();
+        CsReservation.Status status;
+        if (Action.ACCEPT == action)
+            status = CsReservation.Status.ACCEPTED;
+        else if (Action.REJECT == action)
+            status = CsReservation.Status.REJECTED;
+        else {
+            status = CsReservation.Status.REJECTED;
+            logger.info("Action was not expected: " + action);
+        }
+
+        evReservation.status = status;
+        evReservation.price = offer.price;
+        if (CsReservation.Status.REJECTED == status) {
+            reservations.add(evReservation);
+            return;
+        }
+
+        awaitingPayment.add(evReservation);
     }
 
     private void handlePaymentOption(String addressee, ReservationPaymentOption paymentOptions) {
+        logger.info("Handling payment options");
+
+        Reservation reservation = paymentOptions.getReservation();
+        List<String> options = new ArrayList<>(paymentOptions.getOptionsList());
+        paymentByReservation.put(reservation.getId(), options);
     }
 
     @Override
@@ -165,7 +217,9 @@ class ZmqEvApi implements EvApi, MessageHandler {
         requests.add(request);
 
         LocalDateTime dateTime = LocalDateTime.of(request.date, request.time);
-        Instant instant = dateTime.toInstant(ZoneOffset.UTC);
+        ZoneId systemZone = ZoneId.systemDefault();
+        ZoneOffset offset = systemZone.getRules().getOffset(dateTime);
+        Instant instant = dateTime.toInstant(offset);
         Timestamp ts = Timestamp.newBuilder().setSeconds(instant.getEpochSecond()).setNanos(instant.getNano()).build();
         Request r = Request.newBuilder()
                 .setSource(name)
@@ -183,12 +237,40 @@ class ZmqEvApi implements EvApi, MessageHandler {
 
     @Override
     public EvReservation updateReservation(String id, String option) {
-        return null;
+        logger.info("Paying for reservation: " + id + "[" + option + "]");
+
+        OptionalInt rIndex = Data.indexOf(reservations, id, r -> r.id);
+        if (!rIndex.isPresent()) {
+            logger.info("No reservation with id: " + id);
+            throw new IllegalArgumentException("there is no reservation with id: " + id);
+        }
+
+        EvReservation r = reservations.get(rIndex.getAsInt());
+        r.status = CsReservation.Status.PAID;
+        r.payment = option;
+
+        Reservation reservation = Reservation.newBuilder()
+                .setId(r.id)
+                .setOffer(r.offerId)
+                .setRequest(r.requestId)
+                .build();
+
+        Message message = Message.newBuilder()
+                .setReservationAction(ReservationAction.newBuilder()
+                        .setReservation(reservation)
+                        .setAction(Action.PAY)
+                        .setArgument(option))
+                .build();
+        String address = addressesByOffer.get(r.offerId);
+        handler.handle(new MetaMessage(address, message));
+
+        return r;
     }
 
     @Override
     public List<EvReservation> getReservations(String lastId) {
         logger.info("Get reservations, lastId: " + lastId);
+        addMissingPaymentOptions();
 
         List<EvReservation> result;
         if (Objects.isNull(lastId) || lastId.isEmpty() || lastId.equals("-1")) {
@@ -200,9 +282,24 @@ class ZmqEvApi implements EvApi, MessageHandler {
         return result;
     }
 
+    private void addMissingPaymentOptions() {
+        List<EvReservation> gettingPaymentOption = awaitingPayment
+                .stream()
+                .filter(r -> paymentByReservation.containsKey(r.id))
+                .collect(Collectors.toList());
+        awaitingPayment.removeAll(gettingPaymentOption);
+        gettingPaymentOption.forEach(r -> r.paymentOptions = paymentByReservation.get(r.id));
+        reservations.addAll(gettingPaymentOption);
+    }
+
     @Override
     public void makeReservation(String offerId, String requestId) {
+        logger.info("Reservation for offer: " + offerId);
 
+        Reservation reservation = Reservation.newBuilder().setOffer(offerId).setRequest(requestId).build();
+        Message message = Message.newBuilder().setReservation(reservation).build();
+        String address = addressesByOffer.get(offerId);
+        handler.handle(new MetaMessage(address, message));
     }
 
     @Override
@@ -213,7 +310,9 @@ class ZmqEvApi implements EvApi, MessageHandler {
         if (Objects.isNull(offers))
             offersByRequest.put(requestId, offers = new CopyOnWriteArrayList<>());
 
-        return Data.getNext(offers, lastId, offer -> offer.id);
+        List<CsOffer> next = Data.getNext(offers, lastId, offer -> offer.id);
+        logger.info("Returned offers: " + next.size());
+        return next;
     }
 
     @Override

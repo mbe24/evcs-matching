@@ -16,6 +16,8 @@ private static final long serialVersionUID = 0L;
     super(builder);
   }
   private Reservation() {
+    source_ = "";
+    id_ = "";
     request_ = "";
     offer_ = "";
   }
@@ -47,10 +49,22 @@ private static final long serialVersionUID = 0L;
           case 10: {
             java.lang.String s = input.readStringRequireUtf8();
 
-            request_ = s;
+            source_ = s;
             break;
           }
           case 18: {
+            java.lang.String s = input.readStringRequireUtf8();
+
+            id_ = s;
+            break;
+          }
+          case 26: {
+            java.lang.String s = input.readStringRequireUtf8();
+
+            request_ = s;
+            break;
+          }
+          case 34: {
             java.lang.String s = input.readStringRequireUtf8();
 
             offer_ = s;
@@ -88,10 +102,78 @@ private static final long serialVersionUID = 0L;
             org.beyene.protocol.tcp.message.Reservation.class, org.beyene.protocol.tcp.message.Reservation.Builder.class);
   }
 
-  public static final int REQUEST_FIELD_NUMBER = 1;
+  public static final int SOURCE_FIELD_NUMBER = 1;
+  private volatile java.lang.Object source_;
+  /**
+   * <code>string source = 1;</code>
+   */
+  public java.lang.String getSource() {
+    java.lang.Object ref = source_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs = 
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      source_ = s;
+      return s;
+    }
+  }
+  /**
+   * <code>string source = 1;</code>
+   */
+  public com.google.protobuf.ByteString
+      getSourceBytes() {
+    java.lang.Object ref = source_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      source_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
+  public static final int ID_FIELD_NUMBER = 2;
+  private volatile java.lang.Object id_;
+  /**
+   * <code>string id = 2;</code>
+   */
+  public java.lang.String getId() {
+    java.lang.Object ref = id_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs = 
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      id_ = s;
+      return s;
+    }
+  }
+  /**
+   * <code>string id = 2;</code>
+   */
+  public com.google.protobuf.ByteString
+      getIdBytes() {
+    java.lang.Object ref = id_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      id_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
+  public static final int REQUEST_FIELD_NUMBER = 3;
   private volatile java.lang.Object request_;
   /**
-   * <code>string request = 1;</code>
+   * <code>string request = 3;</code>
    */
   public java.lang.String getRequest() {
     java.lang.Object ref = request_;
@@ -106,7 +188,7 @@ private static final long serialVersionUID = 0L;
     }
   }
   /**
-   * <code>string request = 1;</code>
+   * <code>string request = 3;</code>
    */
   public com.google.protobuf.ByteString
       getRequestBytes() {
@@ -122,10 +204,10 @@ private static final long serialVersionUID = 0L;
     }
   }
 
-  public static final int OFFER_FIELD_NUMBER = 2;
+  public static final int OFFER_FIELD_NUMBER = 4;
   private volatile java.lang.Object offer_;
   /**
-   * <code>string offer = 2;</code>
+   * <code>string offer = 4;</code>
    */
   public java.lang.String getOffer() {
     java.lang.Object ref = offer_;
@@ -140,7 +222,7 @@ private static final long serialVersionUID = 0L;
     }
   }
   /**
-   * <code>string offer = 2;</code>
+   * <code>string offer = 4;</code>
    */
   public com.google.protobuf.ByteString
       getOfferBytes() {
@@ -170,11 +252,17 @@ private static final long serialVersionUID = 0L;
   @java.lang.Override
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
+    if (!getSourceBytes().isEmpty()) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 1, source_);
+    }
+    if (!getIdBytes().isEmpty()) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, id_);
+    }
     if (!getRequestBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 1, request_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 3, request_);
     }
     if (!getOfferBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, offer_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 4, offer_);
     }
     unknownFields.writeTo(output);
   }
@@ -185,11 +273,17 @@ private static final long serialVersionUID = 0L;
     if (size != -1) return size;
 
     size = 0;
+    if (!getSourceBytes().isEmpty()) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, source_);
+    }
+    if (!getIdBytes().isEmpty()) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, id_);
+    }
     if (!getRequestBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, request_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, request_);
     }
     if (!getOfferBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, offer_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, offer_);
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -206,6 +300,10 @@ private static final long serialVersionUID = 0L;
     }
     org.beyene.protocol.tcp.message.Reservation other = (org.beyene.protocol.tcp.message.Reservation) obj;
 
+    if (!getSource()
+        .equals(other.getSource())) return false;
+    if (!getId()
+        .equals(other.getId())) return false;
     if (!getRequest()
         .equals(other.getRequest())) return false;
     if (!getOffer()
@@ -221,6 +319,10 @@ private static final long serialVersionUID = 0L;
     }
     int hash = 41;
     hash = (19 * hash) + getDescriptor().hashCode();
+    hash = (37 * hash) + SOURCE_FIELD_NUMBER;
+    hash = (53 * hash) + getSource().hashCode();
+    hash = (37 * hash) + ID_FIELD_NUMBER;
+    hash = (53 * hash) + getId().hashCode();
     hash = (37 * hash) + REQUEST_FIELD_NUMBER;
     hash = (53 * hash) + getRequest().hashCode();
     hash = (37 * hash) + OFFER_FIELD_NUMBER;
@@ -358,6 +460,10 @@ private static final long serialVersionUID = 0L;
     @java.lang.Override
     public Builder clear() {
       super.clear();
+      source_ = "";
+
+      id_ = "";
+
       request_ = "";
 
       offer_ = "";
@@ -388,6 +494,8 @@ private static final long serialVersionUID = 0L;
     @java.lang.Override
     public org.beyene.protocol.tcp.message.Reservation buildPartial() {
       org.beyene.protocol.tcp.message.Reservation result = new org.beyene.protocol.tcp.message.Reservation(this);
+      result.source_ = source_;
+      result.id_ = id_;
       result.request_ = request_;
       result.offer_ = offer_;
       onBuilt();
@@ -438,6 +546,14 @@ private static final long serialVersionUID = 0L;
 
     public Builder mergeFrom(org.beyene.protocol.tcp.message.Reservation other) {
       if (other == org.beyene.protocol.tcp.message.Reservation.getDefaultInstance()) return this;
+      if (!other.getSource().isEmpty()) {
+        source_ = other.source_;
+        onChanged();
+      }
+      if (!other.getId().isEmpty()) {
+        id_ = other.id_;
+        onChanged();
+      }
       if (!other.getRequest().isEmpty()) {
         request_ = other.request_;
         onChanged();
@@ -475,9 +591,147 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
+    private java.lang.Object source_ = "";
+    /**
+     * <code>string source = 1;</code>
+     */
+    public java.lang.String getSource() {
+      java.lang.Object ref = source_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        source_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
+    }
+    /**
+     * <code>string source = 1;</code>
+     */
+    public com.google.protobuf.ByteString
+        getSourceBytes() {
+      java.lang.Object ref = source_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        source_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>string source = 1;</code>
+     */
+    public Builder setSource(
+        java.lang.String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  
+      source_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string source = 1;</code>
+     */
+    public Builder clearSource() {
+      
+      source_ = getDefaultInstance().getSource();
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string source = 1;</code>
+     */
+    public Builder setSourceBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+      
+      source_ = value;
+      onChanged();
+      return this;
+    }
+
+    private java.lang.Object id_ = "";
+    /**
+     * <code>string id = 2;</code>
+     */
+    public java.lang.String getId() {
+      java.lang.Object ref = id_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        id_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
+    }
+    /**
+     * <code>string id = 2;</code>
+     */
+    public com.google.protobuf.ByteString
+        getIdBytes() {
+      java.lang.Object ref = id_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        id_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>string id = 2;</code>
+     */
+    public Builder setId(
+        java.lang.String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  
+      id_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string id = 2;</code>
+     */
+    public Builder clearId() {
+      
+      id_ = getDefaultInstance().getId();
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string id = 2;</code>
+     */
+    public Builder setIdBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+      
+      id_ = value;
+      onChanged();
+      return this;
+    }
+
     private java.lang.Object request_ = "";
     /**
-     * <code>string request = 1;</code>
+     * <code>string request = 3;</code>
      */
     public java.lang.String getRequest() {
       java.lang.Object ref = request_;
@@ -492,7 +746,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string request = 1;</code>
+     * <code>string request = 3;</code>
      */
     public com.google.protobuf.ByteString
         getRequestBytes() {
@@ -508,7 +762,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string request = 1;</code>
+     * <code>string request = 3;</code>
      */
     public Builder setRequest(
         java.lang.String value) {
@@ -521,7 +775,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>string request = 1;</code>
+     * <code>string request = 3;</code>
      */
     public Builder clearRequest() {
       
@@ -530,7 +784,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>string request = 1;</code>
+     * <code>string request = 3;</code>
      */
     public Builder setRequestBytes(
         com.google.protobuf.ByteString value) {
@@ -546,7 +800,7 @@ private static final long serialVersionUID = 0L;
 
     private java.lang.Object offer_ = "";
     /**
-     * <code>string offer = 2;</code>
+     * <code>string offer = 4;</code>
      */
     public java.lang.String getOffer() {
       java.lang.Object ref = offer_;
@@ -561,7 +815,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string offer = 2;</code>
+     * <code>string offer = 4;</code>
      */
     public com.google.protobuf.ByteString
         getOfferBytes() {
@@ -577,7 +831,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string offer = 2;</code>
+     * <code>string offer = 4;</code>
      */
     public Builder setOffer(
         java.lang.String value) {
@@ -590,7 +844,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>string offer = 2;</code>
+     * <code>string offer = 4;</code>
      */
     public Builder clearOffer() {
       
@@ -599,7 +853,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>string offer = 2;</code>
+     * <code>string offer = 4;</code>
      */
     public Builder setOfferBytes(
         com.google.protobuf.ByteString value) {

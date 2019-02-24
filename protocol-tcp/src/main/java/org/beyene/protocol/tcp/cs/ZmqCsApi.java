@@ -7,7 +7,6 @@ import org.beyene.protocol.api.CsApi;
 import org.beyene.protocol.common.dto.CsOffer;
 import org.beyene.protocol.common.dto.CsReservation;
 import org.beyene.protocol.common.dto.EvRequest;
-import org.beyene.protocol.common.dto.EvReservation;
 import org.beyene.protocol.common.util.Data;
 import org.beyene.protocol.tcp.message.*;
 import org.beyene.protocol.tcp.util.MessageHandler;
@@ -17,14 +16,8 @@ import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
 import java.io.IOException;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Random;
+import java.time.*;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
@@ -42,13 +35,17 @@ class ZmqCsApi implements CsApi, MessageHandler {
     private final ExecutorService executor;
 
     private final List<EvRequest> requests = new CopyOnWriteArrayList<>();
-    private final Map<String, String> addressesByRequests = new ConcurrentHashMap<>();
+    private final Map<String, String> addressesByRequest = new ConcurrentHashMap<>();
 
-    private final List<EvReservation> reservations = new CopyOnWriteArrayList<>();
+    private final List<CsReservation> reservations = new CopyOnWriteArrayList<>();
+
     private final Map<String, List<CsOffer>> offersByRequest = new ConcurrentHashMap<>();
+
+    private final List<String> paymentOptions;
 
     public ZmqCsApi(ZmqCsOptions configuration) {
         this.name = configuration.name;
+        this.paymentOptions = new ArrayList<>(configuration.paymentOptions);
 
         this.context = new ZContext();
         this.poller = context.createPoller(1);
@@ -72,8 +69,6 @@ class ZmqCsApi implements CsApi, MessageHandler {
 
     @Override
     public void handle(MetaMessage m) {
-        logger.info("handle=" + m);
-
         Message message = m.message;
         String addressee = m.addressee;
 
@@ -85,7 +80,7 @@ class ZmqCsApi implements CsApi, MessageHandler {
             else if (message.hasReservation())
                 handleReservation(addressee, message.getReservation());
             else if (message.hasReservationAction())
-                handleReservationAction(addressee, message.hasReservationAction());
+                handleReservationAction(addressee, message.getReservationAction());
         } catch (Exception e) {
             logger.info("Error when handling message", e);
         }
@@ -104,17 +99,86 @@ class ZmqCsApi implements CsApi, MessageHandler {
         r.time = dateTime.toLocalTime();
         r.window = request.getWindow();
 
-        addressesByRequests.put(request.getId(), addressee);
+        addressesByRequest.put(request.getId(), addressee);
         requests.add(r);
     }
 
     private void handleForwardOffer(String addressee, ForwardOffer forwardOffer) {
+        Offer offer = forwardOffer.getOffer();
+
+        Timestamp ts = offer.getDate();
+        Instant instant = Instant.ofEpochSecond(ts.getSeconds(), ts.getNanos());
+        LocalDateTime dateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
+
+        String requestId = offer.getRequestId();
+        LocalDate date = dateTime.toLocalDate();
+        LocalTime time = dateTime.toLocalTime();
+
+        CsOffer csOffer = new CsOffer();
+        csOffer.id = offer.getId();
+        csOffer.energy = offer.getEnergy();
+        csOffer.price = offer.getPrice();
+        csOffer.date = date;
+        csOffer.time = time;
+        csOffer.window = offer.getWindow();
+
+        List<CsOffer> offers = offersByRequest.get(requestId);
+        if (Objects.isNull(offers))
+            offersByRequest.put(requestId, offers = new CopyOnWriteArrayList<>());
+
+        offers.add(csOffer);
     }
 
     private void handleReservation(String addressee, Reservation reservation) {
+        logger.info("Handling reservation");
+        String requestId = reservation.getRequest();
+        String offerId = reservation.getOffer();
+
+        OptionalInt rIndex = Data.indexOf(requests, requestId, r -> r.id);
+        if (!rIndex.isPresent()) {
+            logger.info("No request with id: " + requestId);
+            return;
+        }
+        List<CsOffer> offers = offersByRequest.get(requestId);
+
+        OptionalInt oIndex = Data.indexOf(offers, offerId, o -> o.id);
+        if (!oIndex.isPresent()) {
+            logger.info("No offer with id: " + offerId);
+            return;
+        }
+
+        CsOffer offer = offers.get(oIndex.getAsInt());
+
+        CsReservation csReservation = new CsReservation();
+        csReservation.offerId = reservation.getOffer();
+        csReservation.requestId = requestId;
+        csReservation.price = offer.price;
+        csReservation.status = CsReservation.Status.OPEN;
+        csReservation.payment = "";
+
+        int hash = Objects.hash(new Random().nextDouble());
+        csReservation.id = addressee + "-" + Objects.toString(hash).substring(0, 6);
+
+        reservations.add(csReservation);
     }
 
-    private void handleReservationAction(String addressee, boolean b) {
+    private void handleReservationAction(String addressee, ReservationAction reservationAction) {
+        Reservation reservation = reservationAction.getReservation();
+
+        if (Action.PAY != reservationAction.getAction())
+            throw new IllegalArgumentException("invalid action [PAY] for reservation: " + reservation.getId());
+
+        logger.info("Handling action for reservation: " + reservation.getId());
+
+        OptionalInt rIndex = Data.indexOf(reservations, reservation.getId(), r -> r.id);
+        if (!rIndex.isPresent()) {
+            logger.info("No reservation with id: " + reservation.getId());
+            return;
+        }
+
+        CsReservation csReservation = reservations.get(rIndex.getAsInt());
+        csReservation.status = CsReservation.Status.PAID;
+        csReservation.payment = reservationAction.getArgument();
     }
 
     @Override
@@ -133,11 +197,54 @@ class ZmqCsApi implements CsApi, MessageHandler {
 
     @Override
     public List<CsReservation> getReservations(String lastId) {
-        return null;
+        logger.info("Get reservations, lastId: " + lastId);
+
+        List<CsReservation> result;
+        if (Objects.isNull(lastId) || lastId.isEmpty() || lastId.equals("-1")) {
+            result = reservations;
+        } else {
+            result = Data.getNext(reservations, lastId, reservation -> reservation.id);
+        }
+
+        return result;
     }
 
     @Override
     public void updateReservation(String id, CsReservation.Operation op) {
+        logger.info("Update reservation: " + id + ". Operation: " + op);
+
+        OptionalInt rIndex = Data.indexOf(reservations, id, r -> r.id);
+        if (!rIndex.isPresent()) {
+            logger.info("No reservation with id: " + id);
+            return;
+        }
+        CsReservation reservation = reservations.get(rIndex.getAsInt());
+
+        Reservation res = Reservation.newBuilder()
+                .setId(reservation.id)
+                .setOffer(reservation.offerId)
+                .setRequest(reservation.requestId)
+                .build();
+
+        ReservationAction reservationAction = ReservationAction.newBuilder()
+                .setReservation(res)
+                .setAction(op == CsReservation.Operation.ACCEPT ? Action.ACCEPT : Action.REJECT)
+                .build();
+
+        String address = addressesByRequest.get(reservation.requestId);
+        Message message = Message.newBuilder().setReservationAction(reservationAction).build();
+        handler.handle(new MetaMessage(address, message));
+
+        if (CsReservation.Operation.ACCEPT == op) {
+            reservation.status = CsReservation.Status.ACCEPTED;
+
+            ReservationPaymentOption paymentOption = ReservationPaymentOption.newBuilder()
+                    .setReservation(res).addAllOptions(paymentOptions).build();
+            Message m = Message.newBuilder().setPaymentOptions(paymentOption).build();
+            handler.handle(new MetaMessage(address, m));
+        } else {
+            reservation.status = CsReservation.Status.REJECTED;
+        }
     }
 
     @Override
@@ -165,7 +272,9 @@ class ZmqCsApi implements CsApi, MessageHandler {
         offers.add(offer);
 
         LocalDateTime dateTime = LocalDateTime.of(offer.date, offer.time);
-        Instant instant = dateTime.toInstant(ZoneOffset.UTC);
+        ZoneId systemZone = ZoneId.systemDefault();
+        ZoneOffset offset = systemZone.getRules().getOffset(dateTime);
+        Instant instant = dateTime.toInstant(offset);
         Timestamp ts = Timestamp.newBuilder().setSeconds(instant.getEpochSecond()).setNanos(instant.getNano()).build();
         Offer offer1 = Offer.newBuilder()
                 .setSource(name)
@@ -179,7 +288,7 @@ class ZmqCsApi implements CsApi, MessageHandler {
 
         Message message = Message.newBuilder().setOffer(offer1).build();
 
-        String addr = addressesByRequests.get(requestId);
+        String addr = addressesByRequest.get(requestId);
         handler.handle(new MetaMessage(addr, message));
 
         return offer;
@@ -193,7 +302,9 @@ class ZmqCsApi implements CsApi, MessageHandler {
         if (Objects.isNull(offers))
             offersByRequest.put(requestId, (offers = new CopyOnWriteArrayList<>()));
 
-        return Data.getNext(offers, lastId, offer -> offer.id);
+        List<CsOffer> next = Data.getNext(offers, lastId, offer -> offer.id);
+        logger.info("Returned offers: " + next.size());
+        return next;
     }
 
     @Override

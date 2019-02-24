@@ -48,7 +48,7 @@ class OfferView extends React.Component {
       if (offers.length > 0) lastId = offers[offers.length - 1].id;
 
       data[requestId] = {
-        offers: [...offersForRequest, ...offers],
+        offers: offers,
         lastId: lastId,
         activeItem: -1
       };

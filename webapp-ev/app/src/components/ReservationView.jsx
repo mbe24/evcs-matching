@@ -99,6 +99,7 @@ class ReservationView extends React.Component {
           data-id={i}
           onClick={this.handleClick}
         >
+          <td>{item.id}</td>
           <td>{item.requestId}</td>
           <td>{item.offerId}</td>
           <td>{item.price}</td>
@@ -111,13 +112,13 @@ class ReservationView extends React.Component {
     return entries;
   }
 
-  createMenuItems(ids) {
+  createMenuItems(isActive, ids) {
     let items = [];
 
     let hasActiveItem = this.state.activeItem !== -1;
     let menuItems = this.state.activeMenuItems;
 
-    if (!hasActiveItem) return items;
+    if (!hasActiveItem || ids == null) return items;
 
     ids.forEach((id, i) => {
       let activeItem = menuItems[this.state.activeItem];
@@ -150,9 +151,15 @@ class ReservationView extends React.Component {
       isActive = reservation.status === 'ACCEPTED';
       paymentOptions = reservation.paymentOptions;
 
+      console.log('reservation=' + JSON.stringify(reservation));
+
       let menuItems = this.state.activeMenuItems;
       let activeItem = menuItems[this.state.activeItem];
       isPayActive = isActive && activeItem && activeItem !== -1;
+
+      console.log('menuItems=' + JSON.stringify(menuItems));
+      console.log('activeItem=' + activeItem);
+      console.log('isPayActive=' + isPayActive);
     }
 
     return (
@@ -183,7 +190,7 @@ class ReservationView extends React.Component {
                 bsSize="sm"
                 pullRight={false}
               >
-                {this.createMenuItems(paymentOptions)}
+                {this.createMenuItems(isActive, paymentOptions)}
               </DropdownButton>
             </span>
 
@@ -205,6 +212,7 @@ class ReservationView extends React.Component {
           <Table responsive striped hover>
             <thead>
               <tr>
+                <th className="text-center">ID</th>
                 <th className="text-center">Request</th>
                 <th className="text-center">Offer</th>
                 <th className="text-center">Price</th>

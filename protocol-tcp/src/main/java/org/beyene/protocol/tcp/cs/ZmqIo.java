@@ -9,7 +9,6 @@ import org.beyene.protocol.tcp.util.MetaMessage;
 import org.zeromq.ZFrame;
 import org.zeromq.ZMQ;
 import org.zeromq.ZMsg;
-import zmq.ZError;
 
 import java.nio.channels.ClosedByInterruptException;
 import java.util.concurrent.BlockingQueue;
@@ -32,7 +31,7 @@ class ZmqIo implements Callable<Void>, MessageHandler {
 
     @Override
     public void handle(MetaMessage m) {
-        logger.info("handle=" +  m);
+        logger.info("handle=" + m);
         queue.add(m);
     }
 
@@ -61,9 +60,10 @@ class ZmqIo implements Callable<Void>, MessageHandler {
                 poller.poll(10);
             } catch (Exception e) {
                 logger.info("exit=" + e);
-                if (ClosedByInterruptException.class.isInstance(e.getCause()))
+                if (ClosedByInterruptException.class.isInstance(e.getCause())) {
+                    logger.info("Exiting due to interruption");
                     return null;
-                else
+                } else
                     throw e;
             }
 

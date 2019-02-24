@@ -63,9 +63,10 @@ class ZmqIo implements Callable<Void>, MessageHandler {
                 poller.poll(10);
             } catch (Exception e) {
                 logger.info("exit=" + e);
-                if (ClosedByInterruptException.class.isInstance(e.getCause()))
+                if (ClosedByInterruptException.class.isInstance(e.getCause())) {
+                    logger.info("Exiting due to interruption");
                     return null;
-                else
+                } else
                     throw e;
             }
 
