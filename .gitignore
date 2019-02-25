@@ -3,6 +3,7 @@
 .idea/
 *.iml
 
+generated/
 build/
 target/
 

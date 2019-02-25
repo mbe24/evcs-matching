@@ -1,6 +1,6 @@
 package org.beyene.protocol.tcp.util;
 
-import org.beyene.protocol.tcp.message.Message;
+import org.beyene.protocol.common.message.Message;
 
 public class MetaMessage {
 

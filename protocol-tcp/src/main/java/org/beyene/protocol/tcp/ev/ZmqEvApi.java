@@ -9,7 +9,7 @@ import org.beyene.protocol.common.dto.CsReservation;
 import org.beyene.protocol.common.dto.EvRequest;
 import org.beyene.protocol.common.dto.EvReservation;
 import org.beyene.protocol.common.util.Data;
-import org.beyene.protocol.tcp.message.*;
+import org.beyene.protocol.common.message.*;
 import org.beyene.protocol.tcp.util.MessageHandler;
 import org.beyene.protocol.tcp.util.MetaMessage;
 import org.springframework.core.style.ToStringCreator;

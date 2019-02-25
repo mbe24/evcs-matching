@@ -2,7 +2,7 @@ syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
 
-option java_package = "org.beyene.protocol.tcp.message";
+option java_package = "org.beyene.protocol.common.message";
 option java_outer_classname = "Dto";
 option java_multiple_files = true;
 

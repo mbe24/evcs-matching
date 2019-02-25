@@ -3,7 +3,7 @@ package org.beyene.protocol.tcp.cs;
 import com.google.protobuf.util.JsonFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.beyene.protocol.tcp.message.Message;
+import org.beyene.protocol.common.message.Message;
 import org.beyene.protocol.tcp.util.MessageHandler;
 import org.beyene.protocol.tcp.util.MetaMessage;
 import org.zeromq.ZFrame;

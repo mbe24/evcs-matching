@@ -3,16 +3,13 @@ package org.beyene.protocol.tcp.ev;
 import com.google.protobuf.util.JsonFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.beyene.protocol.tcp.message.Message;
+import org.beyene.protocol.common.message.Message;
 import org.beyene.protocol.tcp.util.MessageHandler;
 import org.beyene.protocol.tcp.util.MetaMessage;
 import org.zeromq.ZMQ;
 import org.zeromq.ZMsg;
-import zmq.ZError;
 
 import java.io.Closeable;
-import java.io.IOException;
-import java.nio.channels.ClosedByInterruptException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
