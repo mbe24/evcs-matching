@@ -59,8 +59,10 @@ class RequestForm extends React.Component {
     let now = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
 
     let request = this.state.request;
+    request.energy = 10 + Math.floor(100 * Math.random() * 90) / 100;
     request.date = now.toISOString().substr(0, 10);
     request.time = now.toISOString().substr(11, 8);
+    request.window = 1 + Math.floor(7.5 * Math.random());
 
     this.setState({
       ...this.state,
