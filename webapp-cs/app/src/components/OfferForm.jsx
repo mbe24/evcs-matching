@@ -44,7 +44,11 @@ class OfferForm extends React.Component {
     let offer = nextProps.request;
 
     if (!nextProps.active) offer = createDefaultOffer();
-    else offer.price = Math.round(100 * offer.energy * 0.2) / 100;
+    else {
+      let modifier = Math.random() * 0.1 - 0.05;
+      offer.price = Math.round(100 * offer.energy * (0.2 + modifier)) / 100;
+      offer.window = 30 + 30 * Math.floor(7.5 * Math.random());
+    }
 
     this.setState({
       ...this.state,

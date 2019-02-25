@@ -32,7 +32,7 @@ export const submitReservation = (requestId, offerId) => dispatch => {
     .then(_ => {
       dispatch({
         type: ACTION.SUBMIT_RESERVATION,
-        payload: { isLoading: false }
+        payload: { isLoading: false, reservedItem: { offerId, requestId } }
       });
     })
     .catch(err => {

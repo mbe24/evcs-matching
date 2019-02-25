@@ -5,6 +5,8 @@ import org.beyene.protocol.tcp.cs.ZmqCsOptions;
 import org.beyene.webapp.cs.stub.StubOptions;
 import picocli.CommandLine;
 
+import java.io.File;
+
 @CommandLine.Command(
         name = "java -jar webapp-cs.jar",
         mixinStandardHelpOptions = true,
@@ -12,5 +14,8 @@ import picocli.CommandLine;
         subcommands = {ZmqCsOptions.class, IotaCsOptions.class, StubOptions.class}
 )
 public class Options {
+
+    @CommandLine.Option(names = {"-log", "--log-directory"}, required = false, description = "Logging directory")
+    public File logDir;
 
 }

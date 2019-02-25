@@ -13,16 +13,14 @@ import org.beyene.protocol.tcp.message.*;
 import org.beyene.protocol.tcp.util.MessageHandler;
 import org.beyene.protocol.tcp.util.MetaMessage;
 import org.springframework.core.style.ToStringCreator;
+import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
 import java.io.IOException;
 import java.time.*;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -37,6 +35,7 @@ class ZmqEvApi implements EvApi, MessageHandler {
     private final List<String> addresses;
 
     private final MessageHandler handler;
+    private final ZmqIo zmqIo;
     private final ExecutorService executor;
 
     private final List<EvRequest> requests = new CopyOnWriteArrayList<>();
@@ -62,15 +61,15 @@ class ZmqEvApi implements EvApi, MessageHandler {
                 .boxed()
                 .collect(Collectors.toMap(addresses::get, i -> i));
 
-        ZmqIo io = new ZmqIo(poller, this, sockets);
+        this.zmqIo = new ZmqIo(poller, this, sockets);
         this.executor = Executors.newSingleThreadExecutor();
-        executor.submit(io);
+        executor.submit(zmqIo);
 
-        this.handler = io;
+        this.handler = zmqIo;
     }
 
     private ZMQ.Socket createSocketAndConnect(String addr) {
-        ZMQ.Socket socket = context.createSocket(ZMQ.DEALER);
+        ZMQ.Socket socket = context.createSocket(SocketType.DEALER);
         socket.setIdentity(name.getBytes(ZMQ.CHARSET));
         socket.connect(addr);
         logger.info("Trying to connect to: " + addr);
@@ -296,6 +295,20 @@ class ZmqEvApi implements EvApi, MessageHandler {
     public void makeReservation(String offerId, String requestId) {
         logger.info("Reservation for offer: " + offerId);
 
+        List<CsOffer> offers = offersByRequest.get(requestId);
+
+        if (Objects.isNull(offers))
+            offersByRequest.put(requestId, offers = new CopyOnWriteArrayList<>());
+
+        OptionalInt oIndex = Data.indexOf(offers, offerId, o -> o.id);
+        if (!oIndex.isPresent()) {
+            logger.info("No offer with id: " + offerId);
+            throw new IllegalArgumentException("there is no offer with id: " + offerId);
+        }
+
+        CsOffer offer = offers.get(oIndex.getAsInt());
+        offer.reserved = true;
+
         Reservation reservation = Reservation.newBuilder().setOffer(offerId).setRequest(requestId).build();
         Message message = Message.newBuilder().setReservation(reservation).build();
         String address = addressesByOffer.get(offerId);
@@ -317,10 +330,16 @@ class ZmqEvApi implements EvApi, MessageHandler {
 
     @Override
     public void close() throws IOException {
-        // https://stackoverflow.com/questions/10504172/how-to-shutdown-an-executorservice
-        executor.shutdownNow();
-
-        if (!context.isClosed())
+        zmqIo.close();
+        if (!context.isClosed()) {
             context.close();
+        }
+
+        // https://stackoverflow.com/questions/10504172/how-to-shutdown-an-executorservice
+        executor.shutdown();
+        try {
+            executor.awaitTermination(5, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+        }
     }
 }

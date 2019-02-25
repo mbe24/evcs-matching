@@ -11,6 +11,7 @@ public class CsOffer {
     public LocalDate date;
     public LocalTime time;
     public int window;
+    public boolean reserved;
 
     @Override
     public boolean equals(Object o) {

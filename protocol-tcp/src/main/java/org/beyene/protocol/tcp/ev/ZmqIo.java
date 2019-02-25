@@ -8,15 +8,19 @@ import org.beyene.protocol.tcp.util.MessageHandler;
 import org.beyene.protocol.tcp.util.MetaMessage;
 import org.zeromq.ZMQ;
 import org.zeromq.ZMsg;
+import zmq.ZError;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.nio.channels.ClosedByInterruptException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-class ZmqIo implements Callable<Void>, MessageHandler {
+class ZmqIo implements Callable<Void>, MessageHandler, Closeable {
 
     private static final Log logger = LogFactory.getLog(ZmqIo.class);
 
@@ -27,6 +31,8 @@ class ZmqIo implements Callable<Void>, MessageHandler {
     private final Map<String, Integer> sockets;
     private final Map<Integer, String> socketsReverse = new HashMap<>();
 
+    private final AtomicBoolean quit = new AtomicBoolean();
+
     public ZmqIo(ZMQ.Poller poller, MessageHandler handler, Map<String, Integer> sockets) {
         this.poller = poller;
         this.handler = handler;
@@ -35,15 +41,20 @@ class ZmqIo implements Callable<Void>, MessageHandler {
     }
 
     @Override
+    public void close() {
+        quit.set(true);
+    }
+
+    @Override
     public void handle(MetaMessage m) {
-        logger.info("handle=" +  m);
+        logger.info("handle=" + m);
         queue.add(m);
     }
 
     @Override
     public Void call() throws Exception {
         logger.info("started listening");
-        while (!Thread.currentThread().isInterrupted()) {
+        while (!Thread.currentThread().isInterrupted() && !quit.get()) {
 
             while (!queue.isEmpty()) {
                 logger.info("polling queue...");
@@ -59,16 +70,7 @@ class ZmqIo implements Callable<Void>, MessageHandler {
                 logger.info("sent=" + json);
             }
 
-            try {
-                poller.poll(10);
-            } catch (Exception e) {
-                logger.info("exit=" + e);
-                if (ClosedByInterruptException.class.isInstance(e.getCause())) {
-                    logger.info("Exiting due to interruption");
-                    return null;
-                } else
-                    throw e;
-            }
+            poller.poll(10);
 
             for (int socketIndex = 0; socketIndex < poller.getSize(); socketIndex++) {
                 if (poller.pollin(socketIndex)) {
@@ -77,7 +79,6 @@ class ZmqIo implements Callable<Void>, MessageHandler {
                     handleResponse(message, socketIndex);
                 }
             }
-
         }
 
         logger.info("finished listening");

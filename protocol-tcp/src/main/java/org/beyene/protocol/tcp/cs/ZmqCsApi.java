@@ -12,16 +12,14 @@ import org.beyene.protocol.tcp.message.*;
 import org.beyene.protocol.tcp.util.MessageHandler;
 import org.beyene.protocol.tcp.util.MetaMessage;
 import org.springframework.core.style.ToStringCreator;
+import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
 import java.io.IOException;
 import java.time.*;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
 class ZmqCsApi implements CsApi, MessageHandler {
 
@@ -32,6 +30,7 @@ class ZmqCsApi implements CsApi, MessageHandler {
     private final ZMQ.Poller poller;
 
     private final MessageHandler handler;
+    private final ZmqIo zmqIo;
     private final ExecutorService executor;
 
     private final List<EvRequest> requests = new CopyOnWriteArrayList<>();
@@ -52,15 +51,15 @@ class ZmqCsApi implements CsApi, MessageHandler {
         ZMQ.Socket socket = createSocketAndBind(configuration.endpoint);
         poller.register(socket, ZMQ.Poller.POLLIN);
 
-        ZmqIo io = new ZmqIo(poller, this);
+        this.zmqIo = new ZmqIo(poller, this);
         this.executor = Executors.newSingleThreadExecutor();
-        executor.submit(io);
+        executor.submit(zmqIo);
 
-        this.handler = io;
+        this.handler = zmqIo;
     }
 
     private ZMQ.Socket createSocketAndBind(String addr) {
-        ZMQ.Socket socket = context.createSocket(ZMQ.ROUTER);
+        ZMQ.Socket socket = context.createSocket(SocketType.ROUTER);
         socket.setIdentity(name.getBytes(ZMQ.CHARSET));
         socket.bind(addr);
         logger.info("Trying to bind to: " + addr);
@@ -309,10 +308,16 @@ class ZmqCsApi implements CsApi, MessageHandler {
 
     @Override
     public void close() throws IOException {
-        // https://stackoverflow.com/questions/10504172/how-to-shutdown-an-executorservice
-        executor.shutdownNow();
-
-        if (!context.isClosed())
+        zmqIo.close();
+        if (!context.isClosed()) {
             context.close();
+        }
+
+        // https://stackoverflow.com/questions/10504172/how-to-shutdown-an-executorservice
+        executor.shutdown();
+        try {
+            executor.awaitTermination(5, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+        }
     }
 }

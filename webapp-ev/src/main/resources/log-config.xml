@@ -4,7 +4,7 @@
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
     <statusListener class="ch.qos.logback.core.status.NopStatusListener"/>
 
-    <property name="APP" value="webapp"/>
+    <property name="APP" value="webapp-ev"/>
     <!-- or in Java with: System.setProperty("LOG_DIR", "log"); -->
     <property name="LOG_DIR" value="log"/>
 

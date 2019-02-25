@@ -18,7 +18,8 @@ class OfferView extends React.Component {
     this.state = {
       activeMenuItem: -1,
       requests: [],
-      data: []
+      data: [],
+      reservedMap: {}
     };
 
     this.handleMenuClick = this.handleMenuClick.bind(this);
@@ -42,6 +43,13 @@ class OfferView extends React.Component {
       let requestData = data[requestId];
       if (requestData != null) offersForRequest = requestData.offers;
 
+      // don't add old state data from redux
+      if (offersForRequest.length > 0 && latestOffers.length > 0) {
+        let lastOld = offersForRequest[offersForRequest.length - 1];
+        let lastNew = latestOffers[latestOffers.length - 1];
+        if (lastOld.id === lastNew.id) latestOffers = [];
+      }
+
       let offers = [...offersForRequest, ...latestOffers];
 
       let lastId = -1;
@@ -52,6 +60,14 @@ class OfferView extends React.Component {
         lastId: lastId,
         activeItem: -1
       };
+    }
+
+    let reservedItem = nextProps.reservedItem;
+    if (reservedItem != null) {
+      let { requestId, offerId } = reservedItem;
+      data[requestId].offers
+        .filter(o => o.id === offerId)
+        .forEach(o => (o.reserved = true));
     }
 
     let requests = nextProps.requests;
@@ -112,9 +128,12 @@ class OfferView extends React.Component {
       let isActive =
         i.toString() === this.state.data[requestId].activeItem.toString();
 
+      let className = item.reserved ? 'warning' : '';
+      className = isActive ? 'info' : className;
+
       entries.push(
         <tr
-          className={isActive ? 'info' : ''}
+          className={className}
           key={i}
           data-id={i}
           data-request={requestId}
@@ -160,7 +179,8 @@ class OfferView extends React.Component {
     let currentRequest = '';
     let activeMenuItem = this.state.activeMenuItem;
     let hasRequestSelected = activeMenuItem !== -1;
-    let hasOfferSelected = false;
+
+    let enableReserve = false;
     if (hasRequestSelected) {
       let requestId = this.state.requests[activeMenuItem];
       currentRequest = ' | Request ' + requestId;
@@ -168,7 +188,9 @@ class OfferView extends React.Component {
       let data = this.state.data;
       if (data[requestId] != null) {
         items = data[requestId].offers;
-        hasOfferSelected = data[requestId].activeItem !== -1;
+        let activeItem = data[requestId].activeItem;
+        enableReserve =
+          activeItem !== -1 && !data[requestId].offers[activeItem].reserved;
       }
     }
 
@@ -207,7 +229,7 @@ class OfferView extends React.Component {
 
             <span className="margin-left">
               <Button
-                disabled={!hasOfferSelected}
+                disabled={!enableReserve}
                 bsStyle="warning"
                 bsSize="sm"
                 type="button"
@@ -244,7 +266,8 @@ class OfferView extends React.Component {
 
 const mapStateToProps = state => ({
   requests: state.offerViewReducer.requests,
-  latestData: state.offerViewReducer.latestData
+  latestData: state.offerViewReducer.latestData,
+  reservedItem: state.offerViewReducer.reservedItem
 });
 
 const mapDispatchToProps = dispatch => ({

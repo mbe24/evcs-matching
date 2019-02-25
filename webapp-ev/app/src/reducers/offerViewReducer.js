@@ -22,6 +22,11 @@ export default (state = initialState, action) => {
       };
     case ACTION.FETCH_OFFERS_ERROR:
       return state;
+    case ACTION.SUBMIT_RESERVATION:
+      return {
+        ...state,
+        reservedItem: action.payload.reservedItem
+      };
     default:
       return state;
   }

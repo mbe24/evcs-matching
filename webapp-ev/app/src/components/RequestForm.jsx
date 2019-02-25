@@ -15,10 +15,10 @@ function createDefaultRequest() {
   let now = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
 
   let request = {
-    energy: 99.9,
+    energy: 10 + Math.floor(100 * Math.random() * 90) / 100,
     date: now.toISOString().substr(0, 10),
     time: now.toISOString().substr(11, 8),
-    window: 2
+    window: 1 + Math.floor(7.5 * Math.random())
   };
 
   return request;

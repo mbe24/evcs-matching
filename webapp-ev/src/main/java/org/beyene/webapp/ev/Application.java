@@ -14,6 +14,7 @@ import picocli.CommandLine;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 @ComponentScan({"org.beyene.webapp.common.controller", "org.beyene.webapp.ev.controller"})
 @SpringBootApplication
@@ -36,6 +37,11 @@ public class Application {
             } else if (cmd.isVersionHelpRequested()) {
                 cmd.printVersionHelp(System.out);
                 return;
+            }
+
+            if (Objects.nonNull(options.logDir)) {
+                System.setProperty("LOG_DIR", options.logDir.getAbsolutePath());
+                System.setProperty("LOG_FILE", "TRUE");
             }
 
             GeneralizedApiRunner<EvApi> runner = new GeneralizedApiRunner<>(Application.class, EvApi.class);
