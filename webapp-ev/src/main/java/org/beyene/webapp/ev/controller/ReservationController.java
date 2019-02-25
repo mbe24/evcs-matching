@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @CrossOrigin
-@RequestMapping(path = "api/v1/reservations")
+@RequestMapping(path = "app/api/v1/reservations")
 @ResponseBody
 @RestController
 public class ReservationController {

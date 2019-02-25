@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @CrossOrigin
-@RequestMapping(path = "api/v1/offers")
+@RequestMapping(path = "app/api/v1/offers")
 @ResponseBody
 @RestController
 public class OfferController {

@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @CrossOrigin
-@RequestMapping(path = "api/v1/requests")
+@RequestMapping(path = "app/api/v1/requests")
 @ResponseBody
 @RestController
 public class RequestController {
