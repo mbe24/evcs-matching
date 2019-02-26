@@ -1,8 +1,8 @@
 package org.beyene.webapp.cs.controller;
 
 import org.beyene.protocol.api.CsApi;
-import org.beyene.protocol.common.dto.CsReservation;
-import org.beyene.protocol.common.dto.CsReservation.Operation;
+import org.beyene.protocol.api.data.CsReservation;
+import org.beyene.protocol.api.data.CsReservation.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;

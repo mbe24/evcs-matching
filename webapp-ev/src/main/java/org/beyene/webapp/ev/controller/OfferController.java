@@ -3,7 +3,7 @@ package org.beyene.webapp.ev.controller;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.beyene.protocol.api.EvApi;
-import org.beyene.protocol.common.dto.CsOffer;
+import org.beyene.protocol.api.data.CsOffer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;

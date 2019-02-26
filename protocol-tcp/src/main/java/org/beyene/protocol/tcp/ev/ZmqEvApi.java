@@ -4,15 +4,14 @@ import com.google.protobuf.Timestamp;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.beyene.protocol.api.EvApi;
-import org.beyene.protocol.common.dto.CsOffer;
-import org.beyene.protocol.common.dto.CsReservation;
-import org.beyene.protocol.common.dto.EvRequest;
-import org.beyene.protocol.common.dto.EvReservation;
+import org.beyene.protocol.api.data.CsOffer;
+import org.beyene.protocol.api.data.CsReservation;
+import org.beyene.protocol.api.data.EvRequest;
+import org.beyene.protocol.api.data.EvReservation;
+import org.beyene.protocol.common.dto.*;
 import org.beyene.protocol.common.util.Data;
-import org.beyene.protocol.common.message.*;
 import org.beyene.protocol.tcp.util.MessageHandler;
 import org.beyene.protocol.tcp.util.MetaMessage;
-import org.springframework.core.style.ToStringCreator;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
@@ -53,19 +52,22 @@ class ZmqEvApi implements EvApi, MessageHandler {
         this.context = new ZContext();
         this.poller = context.createPoller(addresses.size());
 
-        addresses.stream()
-                .map(this::createSocketAndConnect)
-                .forEach(socket -> poller.register(socket, ZMQ.Poller.POLLIN));
-
         Map<String, Integer> sockets = IntStream.range(0, addresses.size())
                 .boxed()
                 .collect(Collectors.toMap(addresses::get, i -> i));
 
         this.zmqIo = new ZmqIo(poller, this, sockets);
         this.executor = Executors.newSingleThreadExecutor();
-        executor.submit(zmqIo);
-
         this.handler = zmqIo;
+    }
+
+    @Override
+    public void init() throws Exception {
+        addresses.stream()
+                .map(this::createSocketAndConnect)
+                .forEach(socket -> poller.register(socket, ZMQ.Poller.POLLIN));
+
+        executor.submit(zmqIo);
     }
 
     private ZMQ.Socket createSocketAndConnect(String addr) {
@@ -203,15 +205,7 @@ class ZmqEvApi implements EvApi, MessageHandler {
 
         // encode name in id
         request.id = name + "-" + Objects.toString(Math.abs(hash)).substring(0, 6);
-
-        String s = new ToStringCreator(request)
-                .append("id", request.id)
-                .append("energy", request.energy)
-                .append("date", request.date)
-                .append("time", request.time)
-                .append("window", request.window)
-                .toString();
-        logger.info("New request: " + s);
+        logger.info("New request: " + request);
 
         requests.add(request);
 

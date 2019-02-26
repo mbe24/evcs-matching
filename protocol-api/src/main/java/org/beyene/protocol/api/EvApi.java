@@ -1,8 +1,8 @@
 package org.beyene.protocol.api;
 
-import org.beyene.protocol.common.dto.CsOffer;
-import org.beyene.protocol.common.dto.EvRequest;
-import org.beyene.protocol.common.dto.EvReservation;
+import org.beyene.protocol.api.data.CsOffer;
+import org.beyene.protocol.api.data.EvRequest;
+import org.beyene.protocol.api.data.EvReservation;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;

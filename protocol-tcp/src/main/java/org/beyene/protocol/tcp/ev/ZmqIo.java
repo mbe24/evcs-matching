@@ -3,7 +3,7 @@ package org.beyene.protocol.tcp.ev;
 import com.google.protobuf.util.JsonFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.beyene.protocol.common.message.Message;
+import org.beyene.protocol.common.dto.Message;
 import org.beyene.protocol.tcp.util.MessageHandler;
 import org.beyene.protocol.tcp.util.MetaMessage;
 import org.zeromq.ZMQ;
@@ -44,17 +44,17 @@ class ZmqIo implements Callable<Void>, MessageHandler, Closeable {
 
     @Override
     public void handle(MetaMessage m) {
-        logger.info("handle=" + m);
+        logger.info("Handle=" + m);
         queue.add(m);
     }
 
     @Override
     public Void call() throws Exception {
-        logger.info("started listening");
+        logger.info("Started listening");
         while (!Thread.currentThread().isInterrupted() && !quit.get()) {
 
             while (!queue.isEmpty()) {
-                logger.info("polling queue...");
+                logger.info("Polling queue...");
                 MetaMessage item = queue.poll();
 
                 Message message = item.message;
@@ -64,7 +64,7 @@ class ZmqIo implements Callable<Void>, MessageHandler, Closeable {
                 int socketIndex = sockets.get(addressee);
                 ZMQ.Socket currentSocket = poller.getSocket(socketIndex);
                 currentSocket.send(json);
-                logger.info("sent=" + json);
+                logger.debug("Sent=" + json);
             }
 
             poller.poll(10);
@@ -78,7 +78,7 @@ class ZmqIo implements Callable<Void>, MessageHandler, Closeable {
             }
         }
 
-        logger.info("finished listening");
+        logger.info("Finished listening");
         return null;
     }
 
@@ -88,6 +88,7 @@ class ZmqIo implements Callable<Void>, MessageHandler, Closeable {
         Message.Builder builder = Message.newBuilder();
         try {
             String json = message.poll().getString(ZMQ.CHARSET);
+            logger.debug("Received=" + json);
             JsonFormat.parser().ignoringUnknownFields().merge(json, builder);
         } catch (Exception e) {
             return;

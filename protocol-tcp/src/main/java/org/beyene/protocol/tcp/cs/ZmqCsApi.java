@@ -4,14 +4,13 @@ import com.google.protobuf.Timestamp;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.beyene.protocol.api.CsApi;
-import org.beyene.protocol.common.dto.CsOffer;
-import org.beyene.protocol.common.dto.CsReservation;
-import org.beyene.protocol.common.dto.EvRequest;
+import org.beyene.protocol.api.data.CsOffer;
+import org.beyene.protocol.api.data.CsReservation;
+import org.beyene.protocol.api.data.EvRequest;
+import org.beyene.protocol.common.dto.*;
 import org.beyene.protocol.common.util.Data;
-import org.beyene.protocol.common.message.*;
 import org.beyene.protocol.tcp.util.MessageHandler;
 import org.beyene.protocol.tcp.util.MetaMessage;
-import org.springframework.core.style.ToStringCreator;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
@@ -29,6 +28,8 @@ class ZmqCsApi implements CsApi, MessageHandler {
     private final ZContext context;
     private final ZMQ.Poller poller;
 
+    private final String address;
+
     private final MessageHandler handler;
     private final ZmqIo zmqIo;
     private final ExecutorService executor;
@@ -44,18 +45,23 @@ class ZmqCsApi implements CsApi, MessageHandler {
 
     public ZmqCsApi(ZmqCsOptions configuration) {
         this.name = configuration.name;
+        this.address = configuration.endpoint;
         this.paymentOptions = new ArrayList<>(configuration.paymentOptions);
 
         this.context = new ZContext();
         this.poller = context.createPoller(1);
-        ZMQ.Socket socket = createSocketAndBind(configuration.endpoint);
-        poller.register(socket, ZMQ.Poller.POLLIN);
 
         this.zmqIo = new ZmqIo(poller, this);
         this.executor = Executors.newSingleThreadExecutor();
-        executor.submit(zmqIo);
-
         this.handler = zmqIo;
+    }
+
+    @Override
+    public void init() throws Exception {
+        ZMQ.Socket socket = createSocketAndBind(address);
+        poller.register(socket, ZMQ.Poller.POLLIN);
+
+        executor.submit(zmqIo);
     }
 
     private ZMQ.Socket createSocketAndBind(String addr) {
@@ -83,7 +89,6 @@ class ZmqCsApi implements CsApi, MessageHandler {
         } catch (Exception e) {
             logger.info("Error when handling message", e);
         }
-
     }
 
     private void handleRequest(String addressee, Request request) {
@@ -254,16 +259,7 @@ class ZmqCsApi implements CsApi, MessageHandler {
 
         // encode name in id
         offer.id = name + "-" + Objects.toString(Math.abs(hash)).substring(0, 6);
-
-        String s = new ToStringCreator(offer)
-                .append("id", offer.id)
-                .append("price", offer.price)
-                .append("energy", offer.energy)
-                .append("date", offer.date)
-                .append("time", offer.time)
-                .append("window", offer.window)
-                .toString();
-        logger.info("New offer: " + s);
+        logger.info("New offer: " + offer);
 
         List<CsOffer> offers = offersByRequest.get(requestId);
         if (Objects.isNull(offers))

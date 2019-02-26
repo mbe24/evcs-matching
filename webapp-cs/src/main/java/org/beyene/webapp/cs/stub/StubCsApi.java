@@ -3,9 +3,9 @@ package org.beyene.webapp.cs.stub;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.beyene.protocol.api.CsApi;
-import org.beyene.protocol.common.dto.CsOffer;
-import org.beyene.protocol.common.dto.CsReservation;
-import org.beyene.protocol.common.dto.EvRequest;
+import org.beyene.protocol.api.data.CsOffer;
+import org.beyene.protocol.api.data.CsReservation;
+import org.beyene.protocol.api.data.EvRequest;
 import org.beyene.protocol.common.util.Data;
 import org.springframework.core.style.ToStringCreator;
 

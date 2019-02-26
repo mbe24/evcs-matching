@@ -1,4 +1,4 @@
-package org.beyene.protocol.common.dto;
+package org.beyene.protocol.api.data;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -26,5 +26,16 @@ public class EvRequest {
     @Override
     public int hashCode() {
         return Objects.hash(id, energy, date, time, window);
+    }
+
+    @Override
+    public String toString() {
+        return "EvRequest{" +
+                "id='" + id + '\'' +
+                ", energy=" + energy +
+                ", date=" + date +
+                ", time=" + time +
+                ", window=" + window +
+                '}';
     }
 }

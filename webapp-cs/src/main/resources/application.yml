@@ -6,7 +6,8 @@ logging:
   level:
     root: "INFO"
     org.springframework.boot: "INFO"
-  config: "classpath:log-config.xml"
+# config can be omitted due to autodiscover when named logback.xml
+# logging/config: "classpath:logback.xml"
 
 # https://www.baeldung.com/spring-boot-context-path
 server:

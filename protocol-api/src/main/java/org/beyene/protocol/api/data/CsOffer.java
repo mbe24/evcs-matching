@@ -1,4 +1,4 @@
-package org.beyene.protocol.common.dto;
+package org.beyene.protocol.api.data;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -24,5 +24,17 @@ public class CsOffer {
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "CsOffer{" +
+                "id='" + id + '\'' +
+                ", price=" + price +
+                ", energy=" + energy +
+                ", date=" + date +
+                ", time=" + time +
+                ", window=" + window +
+                '}';
     }
 }

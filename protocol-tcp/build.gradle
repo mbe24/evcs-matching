@@ -4,9 +4,7 @@ dependencies {
     compile project(':protocol-api')
     compile project(':protocol-common')
     compile 'org.zeromq:jeromq:0.5.0'
-    compile 'com.google.protobuf:protobuf-java:3.7.0-rc1'
     compile 'com.google.protobuf:protobuf-java-util:3.7.0-rc1'
-//    compile 'org.msgpack:msgpack-core:0.8.16'
-    compile "org.springframework.boot:spring-boot-starter:${springBootVersion}"
+    compile 'commons-logging:commons-logging-api:1.1'
     testCompile 'junit:junit:4.12'
 }

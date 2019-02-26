@@ -3,7 +3,7 @@ package org.beyene.protocol.tcp.cs;
 import com.google.protobuf.util.JsonFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.beyene.protocol.common.message.Message;
+import org.beyene.protocol.common.dto.Message;
 import org.beyene.protocol.tcp.util.MessageHandler;
 import org.beyene.protocol.tcp.util.MetaMessage;
 import org.zeromq.ZFrame;
@@ -41,17 +41,17 @@ class ZmqIo implements Callable<Void>, MessageHandler, Closeable {
 
     @Override
     public void handle(MetaMessage m) {
-        logger.info("handle=" + m);
+        logger.info("Handle=" + m);
         queue.add(m);
     }
 
     @Override
     public Void call() throws Exception {
-        logger.info("started listening");
+        logger.info("Started listening");
         while (!Thread.currentThread().isInterrupted() && !quit.get()) {
 
             while (!queue.isEmpty()) {
-                logger.info("polling queue...");
+                logger.info("Polling queue...");
                 MetaMessage item = queue.poll();
 
                 Message message = item.message;
@@ -63,13 +63,13 @@ class ZmqIo implements Callable<Void>, MessageHandler, Closeable {
                 response.add(new byte[0]); // empty delimiter frame for dealer socket
                 response.add(json);
                 response.send(poller.getSocket(0));
-                logger.info("sent=" + json);
+                logger.debug("Sent=" + json);
             }
 
             try {
                 poller.poll(10);
             } catch (Exception e) {
-                logger.info("exit=" + e);
+                logger.info("Exit=" + e);
                 if (ClosedByInterruptException.class.isInstance(e.getCause())) {
                     logger.info("Exiting due to interruption");
                     break;
@@ -88,7 +88,7 @@ class ZmqIo implements Callable<Void>, MessageHandler, Closeable {
             }
         }
 
-        logger.info("finished listening");
+        logger.info("Finished listening");
         return null;
     }
 
@@ -100,7 +100,7 @@ class ZmqIo implements Callable<Void>, MessageHandler, Closeable {
         Message.Builder builder = Message.newBuilder();
         try {
             String json = message.poll().getString(ZMQ.CHARSET);
-            logger.info("json=" + json);
+            logger.debug("Received=" + json);
             JsonFormat.parser().ignoringUnknownFields().merge(json, builder);
         } catch (Exception e) {
             return;

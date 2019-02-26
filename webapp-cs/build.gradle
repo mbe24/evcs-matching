@@ -25,7 +25,6 @@ repositories {
 
 dependencies {
 	compile project(':protocol-api')
-	compile project(':protocol-common')
 	compile project(':protocol-tcp')
 	compile project(':protocol-ledger')
 	compile project(':webapp-common')

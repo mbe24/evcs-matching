@@ -1,7 +1,7 @@
 package org.beyene.webapp.cs.controller;
 
 import org.beyene.protocol.api.CsApi;
-import org.beyene.protocol.common.dto.CsOffer;
+import org.beyene.protocol.api.data.CsOffer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;

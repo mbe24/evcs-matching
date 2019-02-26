@@ -1,4 +1,4 @@
-package org.beyene.protocol.common.dto;
+package org.beyene.protocol.api.data;
 
 import java.util.List;
 import java.util.Objects;
