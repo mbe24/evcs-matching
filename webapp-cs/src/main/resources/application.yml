@@ -12,3 +12,14 @@ logging:
 # https://www.baeldung.com/spring-boot-context-path
 server:
   port: "9000"
+
+# https://www.baeldung.com/spring-boot-shutdown
+# https://www.baeldung.com/java-restart-spring-boot-app
+management:
+  security.enabled: "false"
+  endpoint:
+    shutdown.enabled: "true"
+    restart.enabled: "true"
+  endpoints:
+    web.exposure.include: "shutdown, restart"
+    web.base-path: ""
