@@ -10,8 +10,8 @@ import org.beyene.protocol.api.data.EvRequest;
 import org.beyene.protocol.api.data.EvReservation;
 import org.beyene.protocol.common.dto.*;
 import org.beyene.protocol.common.util.Data;
-import org.beyene.protocol.tcp.util.MessageHandler;
-import org.beyene.protocol.tcp.util.MetaMessage;
+import org.beyene.protocol.common.util.MessageHandler;
+import org.beyene.protocol.common.util.MetaMessage;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
@@ -63,11 +63,23 @@ class ZmqEvApi implements EvApi, MessageHandler {
 
     @Override
     public void init() throws Exception {
-        addresses.stream()
-                .map(this::createSocketAndConnect)
-                .forEach(socket -> poller.register(socket, ZMQ.Poller.POLLIN));
+        if (poller.getSize() != addresses.size()) {
+            addresses.stream()
+                    .map(this::createSocketAndConnect)
+                    .forEach(socket -> poller.register(socket, ZMQ.Poller.POLLIN));
 
-        executor.submit(zmqIo);
+            executor.submit(zmqIo);
+        } else {
+            clearUserdata();
+        }
+    }
+
+    private void clearUserdata() {
+        requests.clear();
+        offersByRequest.clear();
+        addressesByOffer.clear();
+        reservations.clear();
+        awaitingPayment.clear();
     }
 
     private ZMQ.Socket createSocketAndConnect(String addr) {

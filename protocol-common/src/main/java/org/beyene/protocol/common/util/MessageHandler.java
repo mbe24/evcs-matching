@@ -1,4 +1,4 @@
-package org.beyene.protocol.tcp.util;
+package org.beyene.protocol.common.util;
 
 public interface MessageHandler {
 

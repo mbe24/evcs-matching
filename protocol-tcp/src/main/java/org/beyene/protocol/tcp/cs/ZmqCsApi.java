@@ -9,8 +9,8 @@ import org.beyene.protocol.api.data.CsReservation;
 import org.beyene.protocol.api.data.EvRequest;
 import org.beyene.protocol.common.dto.*;
 import org.beyene.protocol.common.util.Data;
-import org.beyene.protocol.tcp.util.MessageHandler;
-import org.beyene.protocol.tcp.util.MetaMessage;
+import org.beyene.protocol.common.util.MessageHandler;
+import org.beyene.protocol.common.util.MetaMessage;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
@@ -36,10 +36,9 @@ class ZmqCsApi implements CsApi, MessageHandler {
 
     private final List<EvRequest> requests = new CopyOnWriteArrayList<>();
     private final Map<String, String> addressesByRequest = new ConcurrentHashMap<>();
+    private final Map<String, List<CsOffer>> offersByRequest = new ConcurrentHashMap<>();
 
     private final List<CsReservation> reservations = new CopyOnWriteArrayList<>();
-
-    private final Map<String, List<CsOffer>> offersByRequest = new ConcurrentHashMap<>();
 
     private final List<String> paymentOptions;
 
@@ -58,10 +57,21 @@ class ZmqCsApi implements CsApi, MessageHandler {
 
     @Override
     public void init() throws Exception {
-        ZMQ.Socket socket = createSocketAndBind(address);
-        poller.register(socket, ZMQ.Poller.POLLIN);
+        if (poller.getSize() != 1) {
+            ZMQ.Socket socket = createSocketAndBind(address);
+            poller.register(socket, ZMQ.Poller.POLLIN);
 
-        executor.submit(zmqIo);
+            executor.submit(zmqIo);
+        } else {
+            clearUserdata();
+        }
+    }
+
+    private void clearUserdata() {
+        requests.clear();
+        addressesByRequest.clear();
+        offersByRequest.clear();
+        reservations.clear();
     }
 
     private ZMQ.Socket createSocketAndBind(String addr) {

@@ -1,4 +1,4 @@
-package org.beyene.protocol.tcp.util;
+package org.beyene.protocol.common.util;
 
 import org.beyene.protocol.common.dto.Message;
 
