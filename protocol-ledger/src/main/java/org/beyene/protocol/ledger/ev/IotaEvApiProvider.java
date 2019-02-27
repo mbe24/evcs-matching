@@ -17,18 +17,13 @@ public class IotaEvApiProvider implements ApiProvider<EvApi, IotaEvOptions> {
 
     @Override
     public EvApi newApi(IotaEvOptions configuration) {
-        Mapper<Message, String> mapper = new JsonMessageMapper();
-        Map<String, TransactionListener<Message>> listener = new HashMap<>();
-        //listener.put("EVBID", new BroadcastingListener(messagingTemplate));
-
         Map<String, Object> properties = new HashMap<>();
         properties.put("ssl.check.disable", Boolean.TRUE);
         properties.put("iota.node.protocol", configuration.node.getProtocol());
         properties.put("iota.node.host", configuration.node.getHost());
         properties.put("iota.node.port", Objects.toString(configuration.node.getPort()));
 
-        Ledger<Message, String> ledger = new IotaLedgerProvider().newLedger(mapper, Data.STRING, listener, properties);
-        return new IotaEvApi(ledger, configuration);
+        return new IotaEvApi(properties, configuration);
     }
 
 }

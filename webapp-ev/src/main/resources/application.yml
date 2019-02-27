@@ -4,8 +4,9 @@ spring:
 
 logging:
   level:
-    root: "INFO"
-    org.springframework.boot: "INFO"
+    ROOT: INFO
+    org.springframework.boot: INFO
+    org.beyene.*: DEBUG
 # config can be omitted due to autodiscover when named logback.xml
 # logging/config: "classpath:log-config.xml"
 

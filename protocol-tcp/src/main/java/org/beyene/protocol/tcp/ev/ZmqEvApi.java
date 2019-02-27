@@ -342,10 +342,6 @@ class ZmqEvApi implements EvApi, MessageHandler {
         }
 
         // https://stackoverflow.com/questions/10504172/how-to-shutdown-an-executorservice
-        executor.shutdown();
-        try {
-            executor.awaitTermination(5, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-        }
+        executor.shutdownNow();
     }
 }

@@ -39,7 +39,6 @@ class ZmqCsApi implements CsApi, MessageHandler {
     private final Map<String, List<CsOffer>> offersByRequest = new ConcurrentHashMap<>();
 
     private final List<CsReservation> reservations = new CopyOnWriteArrayList<>();
-
     private final List<String> paymentOptions;
 
     public ZmqCsApi(ZmqCsOptions configuration) {
@@ -320,10 +319,6 @@ class ZmqCsApi implements CsApi, MessageHandler {
         }
 
         // https://stackoverflow.com/questions/10504172/how-to-shutdown-an-executorservice
-        executor.shutdown();
-        try {
-            executor.awaitTermination(5, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-        }
+        executor.shutdownNow();
     }
 }
