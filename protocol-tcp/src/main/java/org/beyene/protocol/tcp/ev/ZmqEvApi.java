@@ -9,33 +9,34 @@ import org.beyene.protocol.api.data.CsReservation;
 import org.beyene.protocol.api.data.EvRequest;
 import org.beyene.protocol.api.data.EvReservation;
 import org.beyene.protocol.common.dto.*;
+import org.beyene.protocol.common.io.ZmqClient;
 import org.beyene.protocol.common.util.Data;
-import org.beyene.protocol.common.util.MessageHandler;
-import org.beyene.protocol.common.util.MetaMessage;
-import org.zeromq.SocketType;
+import org.beyene.protocol.common.io.MessageHandler;
+import org.beyene.protocol.common.io.MetaMessage;
+import org.beyene.protocol.common.util.Util;
 import org.zeromq.ZContext;
-import org.zeromq.ZMQ;
 
 import java.io.IOException;
 import java.time.*;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 class ZmqEvApi implements EvApi, MessageHandler {
 
     private static final Log logger = LogFactory.getLog(ZmqEvApi.class);
 
     private final String name;
-    private final ZContext context;
-    private final ZMQ.Poller poller;
-
     private final List<String> addresses;
 
-    private final MessageHandler handler;
-    private final ZmqIo zmqIo;
-    private final ExecutorService executor;
+    private ZContext context;
+    private MessageHandler handler;
+    private ZmqClient zmqIo;
+    private ExecutorService executor;
 
     private final List<EvRequest> requests = new CopyOnWriteArrayList<>();
     private final Map<String, List<CsOffer>> offersByRequest = new ConcurrentHashMap<>();
@@ -45,33 +46,34 @@ class ZmqEvApi implements EvApi, MessageHandler {
     private final List<EvReservation> awaitingPayment = new CopyOnWriteArrayList<>();
     private final Map<String, List<String>> paymentByReservation = new ConcurrentHashMap<>();
 
+    private final AtomicBoolean configured = new AtomicBoolean(false);
+
     public ZmqEvApi(ZmqEvOptions configuration) {
         this.name = configuration.name;
         this.addresses = new ArrayList<>(configuration.endpoints);
-
-        this.context = new ZContext();
-        this.poller = context.createPoller(addresses.size());
-
-        Map<String, Integer> sockets = IntStream.range(0, addresses.size())
-                .boxed()
-                .collect(Collectors.toMap(addresses::get, i -> i));
-
-        this.zmqIo = new ZmqIo(poller, this, sockets);
-        this.executor = Executors.newSingleThreadExecutor();
-        this.handler = zmqIo;
     }
 
     @Override
     public void init() throws Exception {
-        if (poller.getSize() != addresses.size()) {
-            addresses.stream()
-                    .map(this::createSocketAndConnect)
-                    .forEach(socket -> poller.register(socket, ZMQ.Poller.POLLIN));
-
-            executor.submit(zmqIo);
+        if (configured.compareAndSet(false, true)) {
+            initialize();
         } else {
             clearUserdata();
+            new Timer().schedule(Util.toTimerTask(() ->  initialize()), 1_000);
         }
+    }
+
+    private void initialize() {
+        this.context = new ZContext();
+        this.zmqIo = new ZmqClient(context, this);
+        this.executor = Executors.newSingleThreadExecutor();
+        this.handler = zmqIo;
+
+        addresses.stream().forEach(address -> {
+            zmqIo.connectAddress(address, name);
+        });
+
+        executor.submit(zmqIo);
     }
 
     private void clearUserdata() {
@@ -80,14 +82,6 @@ class ZmqEvApi implements EvApi, MessageHandler {
         addressesByOffer.clear();
         reservations.clear();
         awaitingPayment.clear();
-    }
-
-    private ZMQ.Socket createSocketAndConnect(String addr) {
-        ZMQ.Socket socket = context.createSocket(SocketType.DEALER);
-        socket.setIdentity(name.getBytes(ZMQ.CHARSET));
-        socket.connect(addr);
-        logger.info("Trying to connect to: " + addr);
-        return socket;
     }
 
     @Override

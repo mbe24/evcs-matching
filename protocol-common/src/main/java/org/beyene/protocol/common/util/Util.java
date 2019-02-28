@@ -1,4 +1,4 @@
-package org.beyene.protocol.ledger.util;
+package org.beyene.protocol.common.util;
 
 import java.security.SecureRandom;
 import java.util.TimerTask;

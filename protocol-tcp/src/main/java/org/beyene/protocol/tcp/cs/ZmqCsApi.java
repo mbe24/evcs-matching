@@ -7,10 +7,12 @@ import org.beyene.protocol.api.CsApi;
 import org.beyene.protocol.api.data.CsOffer;
 import org.beyene.protocol.api.data.CsReservation;
 import org.beyene.protocol.api.data.EvRequest;
+import org.beyene.protocol.common.io.ZmqServer;
 import org.beyene.protocol.common.dto.*;
 import org.beyene.protocol.common.util.Data;
-import org.beyene.protocol.common.util.MessageHandler;
-import org.beyene.protocol.common.util.MetaMessage;
+import org.beyene.protocol.common.io.MessageHandler;
+import org.beyene.protocol.common.io.MetaMessage;
+import org.beyene.protocol.common.util.Util;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
@@ -19,20 +21,20 @@ import java.io.IOException;
 import java.time.*;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 class ZmqCsApi implements CsApi, MessageHandler {
 
     private static final Log logger = LogFactory.getLog(ZmqCsApi.class);
 
     private final String name;
-    private final ZContext context;
-    private final ZMQ.Poller poller;
+    private final String endpoint;
 
-    private final String address;
-
-    private final MessageHandler handler;
-    private final ZmqIo zmqIo;
-    private final ExecutorService executor;
+    private ZContext context;
+    private ZMQ.Poller poller;
+    private ZmqServer zmqIo;
+    private MessageHandler handler;
+    private ExecutorService executor;
 
     private final List<EvRequest> requests = new CopyOnWriteArrayList<>();
     private final Map<String, String> addressesByRequest = new ConcurrentHashMap<>();
@@ -41,36 +43,35 @@ class ZmqCsApi implements CsApi, MessageHandler {
     private final List<CsReservation> reservations = new CopyOnWriteArrayList<>();
     private final List<String> paymentOptions;
 
+    private final AtomicBoolean configured = new AtomicBoolean(false);
+
     public ZmqCsApi(ZmqCsOptions configuration) {
         this.name = configuration.name;
-        this.address = configuration.endpoint;
+        this.endpoint = configuration.endpoint;
         this.paymentOptions = new ArrayList<>(configuration.paymentOptions);
-
-        this.context = new ZContext();
-        this.poller = context.createPoller(1);
-
-        this.zmqIo = new ZmqIo(poller, this);
-        this.executor = Executors.newSingleThreadExecutor();
-        this.handler = zmqIo;
     }
 
     @Override
     public void init() throws Exception {
-        if (poller.getSize() != 1) {
-            ZMQ.Socket socket = createSocketAndBind(address);
-            poller.register(socket, ZMQ.Poller.POLLIN);
-
-            executor.submit(zmqIo);
+        if (configured.compareAndSet(false, true)) {
+            initialize();
         } else {
             clearUserdata();
+            new Timer().schedule(Util.toTimerTask(() ->  initialize()), 1_000);
         }
     }
 
-    private void clearUserdata() {
-        requests.clear();
-        addressesByRequest.clear();
-        offersByRequest.clear();
-        reservations.clear();
+    private void initialize() {
+        this.context = new ZContext();
+        this.poller = context.createPoller(1);
+
+        ZMQ.Socket socket = createSocketAndBind(endpoint);
+        this.poller.register(socket, ZMQ.Poller.POLLIN);
+        this.zmqIo = new ZmqServer(poller, this);
+        this.handler = zmqIo;
+
+        this.executor = Executors.newSingleThreadExecutor();
+        this.executor.submit(zmqIo);
     }
 
     private ZMQ.Socket createSocketAndBind(String addr) {
@@ -79,6 +80,13 @@ class ZmqCsApi implements CsApi, MessageHandler {
         socket.bind(addr);
         logger.info("Trying to bind to: " + addr);
         return socket;
+    }
+
+    private void clearUserdata() {
+        requests.clear();
+        addressesByRequest.clear();
+        offersByRequest.clear();
+        reservations.clear();
     }
 
     @Override
@@ -313,6 +321,9 @@ class ZmqCsApi implements CsApi, MessageHandler {
 
     @Override
     public void close() throws IOException {
+        // https://github.com/zeromq/jeromq/issues/489 -- release network resources, necessary for restart
+        poller.getSocket(0).unbind(endpoint);
+
         zmqIo.close();
         if (!context.isClosed()) {
             context.close();

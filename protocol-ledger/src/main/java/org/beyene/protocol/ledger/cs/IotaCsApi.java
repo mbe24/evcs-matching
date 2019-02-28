@@ -9,12 +9,13 @@ import org.beyene.protocol.api.CsApi;
 import org.beyene.protocol.api.data.CsOffer;
 import org.beyene.protocol.api.data.CsReservation;
 import org.beyene.protocol.api.data.EvRequest;
+import org.beyene.protocol.common.io.ZmqServer;
 import org.beyene.protocol.common.dto.*;
-import org.beyene.protocol.common.util.MessageHandler;
-import org.beyene.protocol.common.util.MetaMessage;
+import org.beyene.protocol.common.io.MessageHandler;
+import org.beyene.protocol.common.io.MetaMessage;
 import org.beyene.protocol.ledger.util.JsonMessageMapper;
 import org.beyene.protocol.ledger.util.LedgerToMessagHandlerAdapter;
-import org.beyene.protocol.ledger.util.Util;
+import org.beyene.protocol.common.util.Util;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
@@ -31,26 +32,24 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static org.beyene.protocol.common.util.Data.getNext;
 import static org.beyene.protocol.common.util.Data.indexOf;
 
-public class IotaCsApi implements CsApi, TransactionListener<Message>, MessageHandler {
+class IotaCsApi implements CsApi, TransactionListener<Message>, MessageHandler {
 
     private static final Log logger = LogFactory.getLog(IotaCsApi.class);
 
     private final String name;
     private final String tag;
+    private final String endpoint;
     private final boolean allTxs;
 
-    private final String endpoint;
-    private final ZContext context;
-    private final ZMQ.Poller poller;
-
-    private final MessageHandler zmqHandler;
-    private final ZmqIo zmqIo;
-
+    private ZContext context;
+    private ZMQ.Poller poller;
+    private MessageHandler zmqHandler;
+    private ZmqServer zmqIo;
     private Ledger<Message, String> ledger;
     private LedgerToMessagHandlerAdapter handler;
+    private ExecutorService executor;
 
     private final Map<String, Object> properties;
-    private final ExecutorService executor;
 
     private final List<EvRequest> requests = new CopyOnWriteArrayList<>();
     private final Map<String, String> addressesByRequest = new ConcurrentHashMap<>();
@@ -69,36 +68,17 @@ public class IotaCsApi implements CsApi, TransactionListener<Message>, MessageHa
         this.endpoint = configuration.endpoint;
         this.paymentOptions = new ArrayList<>(configuration.paymentOptions);
 
-        this.context = new ZContext();
-        this.poller = context.createPoller(1);
-
-        this.zmqIo = new ZmqIo(poller, this);
-        this.zmqHandler = zmqIo;
-
         this.tag = configuration.tag;
         this.allTxs = configuration.allTxs;
-
-        this.executor = Executors.newFixedThreadPool(2);
     }
 
     @Override
     public void init() throws Exception {
         if (configured.compareAndSet(false, true)) {
-
-            ZMQ.Socket socket = createSocketAndBind(endpoint);
-            poller.register(socket, ZMQ.Poller.POLLIN);
-            executor.submit(zmqIo);
-
-            logger.info("Configuring with main tag: " + tag);
-            Map<String, TransactionListener<Message>> listener = new HashMap<>();
-            listener.put(tag, this);
-            Mapper<Message, String> mapper = new JsonMessageMapper();
-            this.ledger = new IotaLedgerProvider().newLedger(mapper, Data.STRING, listener, properties);
-            this.handler = new LedgerToMessagHandlerAdapter(ledger);
-
-            executor.submit(handler);
+            initialize();
         } else {
             clearUserdata();
+            new Timer().schedule(Util.toTimerTask(() ->  initialize()), 1_000);
         }
 
         if (allTxs) {
@@ -110,6 +90,27 @@ public class IotaCsApi implements CsApi, TransactionListener<Message>, MessageHa
             });
             new Timer().schedule(task, 5_000);
         }
+    }
+
+    private void initialize() {
+        this.context = new ZContext();
+        this.poller = context.createPoller(1);
+        ZMQ.Socket socket = createSocketAndBind(endpoint);
+        poller.register(socket, ZMQ.Poller.POLLIN);
+        this.zmqIo = new ZmqServer(poller, this);
+        this.zmqHandler = zmqIo;
+
+        this.executor = Executors.newFixedThreadPool(2);
+        executor.submit(zmqIo);
+
+        logger.info("Configuring with main tag: " + tag);
+        Map<String, TransactionListener<Message>> listener = new HashMap<>();
+        listener.put(tag, this);
+        Mapper<Message, String> mapper = new JsonMessageMapper();
+        this.ledger = new IotaLedgerProvider().newLedger(mapper, Data.STRING, listener, properties);
+        this.handler = new LedgerToMessagHandlerAdapter(ledger);
+
+        executor.submit(handler);
     }
 
     private void clearUserdata() {
@@ -398,6 +399,9 @@ public class IotaCsApi implements CsApi, TransactionListener<Message>, MessageHa
 
     @Override
     public void close() throws IOException {
+        // https://github.com/zeromq/jeromq/issues/489 -- release network resources, necessary for restart
+        poller.getSocket(0).unbind(endpoint);
+
         zmqIo.close();
         if (!context.isClosed()) {
             context.close();

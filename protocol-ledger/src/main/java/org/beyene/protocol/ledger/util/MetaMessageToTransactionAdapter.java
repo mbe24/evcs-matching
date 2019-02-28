@@ -2,7 +2,7 @@ package org.beyene.protocol.ledger.util;
 
 import org.beyene.ledger.api.Transaction;
 import org.beyene.protocol.common.dto.Message;
-import org.beyene.protocol.common.util.MetaMessage;
+import org.beyene.protocol.common.io.MetaMessage;
 
 import java.time.Instant;
 

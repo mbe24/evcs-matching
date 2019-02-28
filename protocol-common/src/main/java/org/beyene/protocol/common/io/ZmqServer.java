@@ -1,11 +1,10 @@
-package org.beyene.protocol.ledger.cs;
+package org.beyene.protocol.common.io;
 
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.beyene.protocol.common.dto.Message;
-import org.beyene.protocol.common.util.MessageHandler;
-import org.beyene.protocol.common.util.MetaMessage;
 import org.zeromq.ZFrame;
 import org.zeromq.ZMQ;
 import org.zeromq.ZMsg;
@@ -18,9 +17,9 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-class ZmqIo implements Callable<Void>, MessageHandler, Closeable {
+public class ZmqServer implements Callable<Void>, MessageHandler, Closeable {
 
-    private static final Log logger = LogFactory.getLog(ZmqIo.class);
+    private static final Log logger = LogFactory.getLog(ZmqServer.class);
 
     private final ZMQ.Poller poller;
     private final BlockingQueue<MetaMessage> queue = new LinkedBlockingQueue<>();
@@ -29,7 +28,7 @@ class ZmqIo implements Callable<Void>, MessageHandler, Closeable {
 
     private final AtomicBoolean quit = new AtomicBoolean();
 
-    public ZmqIo(ZMQ.Poller poller, MessageHandler handler) {
+    public ZmqServer(ZMQ.Poller poller, MessageHandler handler) {
         this.poller = poller;
         this.handler = handler;
     }
@@ -48,6 +47,18 @@ class ZmqIo implements Callable<Void>, MessageHandler, Closeable {
     @Override
     public Void call() throws Exception {
         logger.info("Started listening");
+
+        try {
+            callDelegate();
+        } catch (Exception e) {
+            logger.info("Error in ZmqServer!", e);
+        }
+
+        logger.info("Finished listening");
+        return null;
+    }
+
+    private void callDelegate() throws InvalidProtocolBufferException {
         while (!Thread.currentThread().isInterrupted() && !quit.get()) {
 
             while (!queue.isEmpty()) {
@@ -87,9 +98,6 @@ class ZmqIo implements Callable<Void>, MessageHandler, Closeable {
                 handleRequest(request);
             }
         }
-
-        logger.info("Finished listening");
-        return null;
     }
 
     private void handleRequest(ZMsg message) {

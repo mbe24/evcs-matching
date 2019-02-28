@@ -11,11 +11,12 @@ import org.beyene.protocol.api.data.CsReservation;
 import org.beyene.protocol.api.data.EvRequest;
 import org.beyene.protocol.api.data.EvReservation;
 import org.beyene.protocol.common.dto.*;
-import org.beyene.protocol.common.util.MessageHandler;
-import org.beyene.protocol.common.util.MetaMessage;
+import org.beyene.protocol.common.io.MessageHandler;
+import org.beyene.protocol.common.io.MetaMessage;
+import org.beyene.protocol.common.io.ZmqClient;
 import org.beyene.protocol.ledger.util.JsonMessageMapper;
 import org.beyene.protocol.ledger.util.LedgerToMessagHandlerAdapter;
-import org.beyene.protocol.ledger.util.Util;
+import org.beyene.protocol.common.util.Util;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
@@ -33,24 +34,21 @@ import java.util.stream.Collectors;
 import static org.beyene.protocol.common.util.Data.getNext;
 import static org.beyene.protocol.common.util.Data.indexOf;
 
-public class IotaEvApi implements EvApi, TransactionListener<Message>, MessageHandler {
+class IotaEvApi implements EvApi, TransactionListener<Message>, MessageHandler {
 
     private static final Log logger = LogFactory.getLog(IotaEvApi.class);
 
     private final String name;
     private final String tag;
 
-    private final ZContext context;
-    private final ZMQ.Poller poller;
-
+    private  ZContext context;
     private MessageHandler zmqHandler;
-    private ZmqIo zmqIo;
-
+    private ZmqClient zmqIo;
+    private ExecutorService executor;
     private Ledger<Message, String> ledger;
     private LedgerToMessagHandlerAdapter handler;
 
     private final Map<String, Object> properties;
-    private final ExecutorService executor;
 
     private final List<EvRequest> requests = new CopyOnWriteArrayList<>();
     private final Map<String, List<CsOffer>> offersByRequest = new ConcurrentHashMap<>();
@@ -66,40 +64,40 @@ public class IotaEvApi implements EvApi, TransactionListener<Message>, MessageHa
         this.properties = properties;
         this.name = configuration.name;
         this.tag = configuration.tag;
-
-        this.handler = new LedgerToMessagHandlerAdapter(ledger);
-
-        this.context = new ZContext();
-        // poller gets grows, if size limit is reached
-        this.poller = context.createPoller(5);
-        this.executor = Executors.newFixedThreadPool(2);
     }
 
     @Override
     public void init() throws Exception {
         if (configured.compareAndSet(false, true)) {
-            logger.info("Initializing IOTA EV backend...");
-
-            this.zmqIo = new ZmqIo(poller, this);
-            this.zmqHandler = zmqIo;
-            executor.submit(zmqIo);
-
-            Mapper<Message, String> mapper = new JsonMessageMapper();
-            this.ledger = new IotaLedgerProvider()
-                    .newLedger(mapper, Data.STRING, Collections.emptyMap(), properties);
-            this.handler = new LedgerToMessagHandlerAdapter(ledger);
-
-            executor.submit(handler);
+            initialize();
         } else {
             clearUserdata();
+            new Timer().schedule(Util.toTimerTask(() ->  initialize()), 1_000);
         }
+    }
+
+    private void initialize() {
+        logger.info("Initializing IOTA EV backend...");
+
+        this.context = new ZContext();
+        this.executor = Executors.newFixedThreadPool(2);
+
+        this.zmqIo = new ZmqClient(context, this);
+        this.zmqHandler = zmqIo;
+        executor.submit(zmqIo);
+
+        Mapper<Message, String> mapper = new JsonMessageMapper();
+        this.ledger = new IotaLedgerProvider()
+                .newLedger(mapper, Data.STRING, Collections.emptyMap(), properties);
+        this.handler = new LedgerToMessagHandlerAdapter(ledger);
+
+        executor.submit(handler);
     }
 
     private void clearUserdata() {
         logger.info("Reinitializing IOTA EV backend...");
 
-        for (int socketIndex = 0; socketIndex < poller.getSize(); socketIndex++)
-            poller.unregister(poller.getSocket(socketIndex));
+        zmqIo.clear();
 
         requests.clear();
         offersByRequest.clear();
@@ -162,34 +160,10 @@ public class IotaEvApi implements EvApi, TransactionListener<Message>, MessageHa
         offers.add(csOffer);
 
         String address = offer.getSource();
-        if (!addressesByOffer.containsValue(address))
-            registerEndpoint(address);
+        if (!zmqIo.hasAddress(address))
+            zmqIo.connectAddress(address, name);
+
         addressesByOffer.put(csOffer.id, address);
-    }
-
-    private void registerEndpoint(String address) {
-        /*
-        synchronized (sockets) {
-            if (sockets.isEmpty()) {
-                sockets.put(address, 0);
-
-                ZMQ.Socket socket = createSocketAndConnect(address);
-                poller.register(socket, ZMQ.Poller.POLLIN);
-
-                this.zmqIo = new ZmqIo(poller, this, sockets);
-                this.zmqHandler = zmqIo;
-                executor.submit(zmqIo);
-            } else {
-                ZMQ.Socket socket = createSocketAndConnect(address);
-                zmqIo.registerSocket(address, socket);
-            }
-        }
-        */
-
-        synchronized (zmqIo) {
-            ZMQ.Socket socket = createSocketAndConnect(address);
-            zmqIo.registerSocket(address, socket);
-        }
     }
 
     private ZMQ.Socket createSocketAndConnect(String addr) {

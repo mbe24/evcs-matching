@@ -4,8 +4,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.beyene.ledger.api.Ledger;
 import org.beyene.protocol.common.dto.Message;
-import org.beyene.protocol.common.util.MessageHandler;
-import org.beyene.protocol.common.util.MetaMessage;
+import org.beyene.protocol.common.io.MessageHandler;
+import org.beyene.protocol.common.io.MetaMessage;
 
 import java.io.Closeable;
 import java.io.IOException;

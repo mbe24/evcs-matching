@@ -1,27 +1,29 @@
-package org.beyene.protocol.ledger.ev;
+package org.beyene.protocol.common.io;
 
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.beyene.protocol.common.dto.Message;
-import org.beyene.protocol.common.util.MessageHandler;
-import org.beyene.protocol.common.util.MetaMessage;
+import org.zeromq.SocketType;
+import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 import org.zeromq.ZMsg;
 
 import java.io.Closeable;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
-class ZmqIo implements Callable<Void>, MessageHandler, Closeable {
+public class ZmqClient implements Callable<Void>, MessageHandler, Closeable {
 
-    private static final Log logger = LogFactory.getLog(ZmqIo.class);
+    private static final Log logger = LogFactory.getLog(ZmqClient.class);
 
+    private final ZContext context;
     private final ZMQ.Poller poller;
     private final BlockingQueue<MetaMessage> queue = new LinkedBlockingQueue<>();
 
@@ -31,20 +33,61 @@ class ZmqIo implements Callable<Void>, MessageHandler, Closeable {
 
     private final AtomicBoolean quit = new AtomicBoolean();
 
-    public ZmqIo(ZMQ.Poller poller, MessageHandler handler) {
-        this.poller = poller;
+    public ZmqClient(ZContext context, MessageHandler handler) {
+        this.context = context;
+        // poller gets grows, if size limit is reached
+        this.poller = context.createPoller(5);
         this.handler = handler;
     }
 
-    public void registerSocket(String address, ZMQ.Socket socket) {
-        int index = poller.register(socket, ZMQ.Poller.POLLIN);
-        sockets.put(address, index);
-        socketsReverse.put(index, address);
+    public void clear() {
+        for (int socketIndex = 0; socketIndex < poller.getSize(); socketIndex++) {
+            ZMQ.Socket socket = poller.getSocket(socketIndex);
+            poller.unregister(socket);
+        }
+
+        sockets.clear();
+        socketsReverse.clear();
+    }
+
+    public boolean hasAddress(String address) {
+        return sockets.containsKey(address);
+    }
+
+    public void connectAddress(String address, String name) {
+        sockets.computeIfAbsent(address, addr -> {
+            ZMQ.Socket socket = createSocketAndConnect(addr, name);
+            int index = poller.register(socket, ZMQ.Poller.POLLIN);
+            return index;
+        });
+
+        Map<Integer, String> map = sockets.entrySet()
+                .stream()
+                .collect(Collectors.toMap(e -> e.getValue(), e -> e.getKey()));
+
+        synchronized (socketsReverse) {
+            socketsReverse.clear();
+            socketsReverse.putAll(map);
+        }
+    }
+
+    private ZMQ.Socket createSocketAndConnect(String addr, String name) {
+        ZMQ.Socket socket = context.createSocket(SocketType.DEALER);
+        socket.setIdentity(name.getBytes(ZMQ.CHARSET));
+        socket.connect(addr);
+        logger.info("Trying to connect to: " + addr);
+        return socket;
     }
 
     @Override
     public void close() {
         quit.set(true);
+
+        // https://github.com/zeromq/jeromq/issues/489 -- release network resources, necessary for restart
+        for (int socketIndex = 0; socketIndex < poller.getSize(); socketIndex++) {
+            ZMQ.Socket socket = poller.getSocket(socketIndex);
+            socket.disconnect(socketsReverse.get(socketIndex));
+        }
     }
 
     @Override
@@ -56,6 +99,18 @@ class ZmqIo implements Callable<Void>, MessageHandler, Closeable {
     @Override
     public Void call() throws Exception {
         logger.info("Started listening");
+
+        try {
+            callDelegate();
+        } catch (Exception e) {
+            logger.info("Error in ZmqClient!", e);
+        }
+
+        logger.info("Finished listening");
+        return null;
+    }
+
+    private Void callDelegate() throws InvalidProtocolBufferException {
         while (!Thread.currentThread().isInterrupted() && !quit.get()) {
 
             while (!queue.isEmpty()) {
@@ -83,7 +138,6 @@ class ZmqIo implements Callable<Void>, MessageHandler, Closeable {
             }
         }
 
-        logger.info("Finished listening");
         return null;
     }
 
