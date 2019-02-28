@@ -11,3 +11,5 @@ $ ./gradlew generateProto
 ```
 
 The respective sources are not contained in the repository and some IDEs will not generate them automatically.
+
+There are two application, for the EV and the CS, which are located in `webapp-ev/` and `webapp-cs`, respectively.
