@@ -4,10 +4,10 @@ Repository that hosts the web applications, the underlying protocol API, and its
 
 ### Usage
 
-Generate sources from protobuf with
+Generate sources from protobuf definition with
 
 ```shell
 $ ./gradlew generateProto
 ```
 
-The sources are not contained in the repository.
+The respective sources are not contained in the repository and some IDEs will not generate them automatically.
