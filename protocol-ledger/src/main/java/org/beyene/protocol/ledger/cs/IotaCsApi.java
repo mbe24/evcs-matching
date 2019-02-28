@@ -9,13 +9,15 @@ import org.beyene.protocol.api.CsApi;
 import org.beyene.protocol.api.data.CsOffer;
 import org.beyene.protocol.api.data.CsReservation;
 import org.beyene.protocol.api.data.EvRequest;
-import org.beyene.protocol.common.io.ZmqServer;
 import org.beyene.protocol.common.dto.*;
 import org.beyene.protocol.common.io.MessageHandler;
 import org.beyene.protocol.common.io.MetaMessage;
+import org.beyene.protocol.common.io.ZmqServer;
+import org.beyene.protocol.common.util.ApiUtil;
+import org.beyene.protocol.common.util.HandlerUtil;
+import org.beyene.protocol.common.util.Util;
 import org.beyene.protocol.ledger.util.JsonMessageMapper;
 import org.beyene.protocol.ledger.util.LedgerToMessagHandlerAdapter;
-import org.beyene.protocol.common.util.Util;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
@@ -29,7 +31,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.beyene.protocol.common.util.Data.getNext;
 import static org.beyene.protocol.common.util.Data.indexOf;
 
 class IotaCsApi implements CsApi, TransactionListener<Message>, MessageHandler {
@@ -168,20 +169,10 @@ class IotaCsApi implements CsApi, TransactionListener<Message>, MessageHandler {
     }
 
     private void handleRequest(String addressee, Request request) {
-        Timestamp ts = request.getDate();
-        Instant instant = Instant.ofEpochSecond(ts.getSeconds(), ts.getNanos());
-        LocalDateTime dateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
+        HandlerUtil.handleRequest(requests, addressesByRequest, addressee, request);
 
-        EvRequest r = new EvRequest();
-        r.id = request.getId();
-        r.energy = request.getEnergy();
-        r.date = dateTime.toLocalDate();
-        r.time = dateTime.toLocalTime();
-        r.window = request.getWindow();
-
-        tagsByRequest.put(r.id, request.getSource());
+        // each request has tag, where related offers are posted
         followNewTag(request.getSource());
-        requests.add(r);
     }
 
     private void followNewTag(String tag) {
@@ -227,174 +218,41 @@ class IotaCsApi implements CsApi, TransactionListener<Message>, MessageHandler {
     }
 
     private void handleReservation(String addressee, Reservation reservation) {
-        logger.info("Handling reservation");
+        HandlerUtil.handleReservation(requests, offersByRequest, reservations, addressee, reservation);
+
+        // save ZMQ endpoint address
         String requestId = reservation.getRequest();
-        String offerId = reservation.getOffer();
-
-        OptionalInt rIndex = indexOf(requests, requestId, r -> r.id);
-        if (!rIndex.isPresent()) {
-            logger.info("No request with id: " + requestId);
-            return;
-        }
-        List<CsOffer> offers = offersByRequest.get(requestId);
-
-        OptionalInt oIndex = indexOf(offers, offerId, o -> o.id);
-        if (!oIndex.isPresent()) {
-            logger.info("No offer with id: " + offerId);
-            return;
-        }
-
-        CsOffer offer = offers.get(oIndex.getAsInt());
-
-        CsReservation csReservation = new CsReservation();
-        csReservation.offerId = reservation.getOffer();
-        csReservation.requestId = requestId;
-        csReservation.price = offer.price;
-        csReservation.status = CsReservation.Status.OPEN;
-        csReservation.payment = "";
-
-        int hash = Objects.hash(new Random().nextDouble());
-        csReservation.id = addressee + "-" + Objects.toString(hash).substring(0, 6);
-
-        reservations.add(csReservation);
         String address = reservation.getSource();
         addressesByRequest.put(requestId, address);
     }
 
     private void handleReservationAction(String addressee, ReservationAction reservationAction) {
-        Reservation reservation = reservationAction.getReservation();
-
-        if (Action.PAY != reservationAction.getAction())
-            throw new IllegalArgumentException("invalid action [PAY] for reservation: " + reservation.getId());
-
-        logger.info("Handling action for reservation: " + reservation.getId());
-
-        OptionalInt rIndex = indexOf(reservations, reservation.getId(), r -> r.id);
-        if (!rIndex.isPresent()) {
-            logger.info("No reservation with id: " + reservation.getId());
-            return;
-        }
-
-        CsReservation csReservation = reservations.get(rIndex.getAsInt());
-        csReservation.status = CsReservation.Status.PAID;
-        csReservation.payment = reservationAction.getArgument();
+        HandlerUtil.handleReservationAction(reservations, addressee, reservationAction);
     }
 
     @Override
     public List<EvRequest> getRequests(String lastId) {
-        logger.info("Get requests, lastId: " + lastId);
-
-        List<EvRequest> result;
-        if (Objects.isNull(lastId) || lastId.isEmpty() || lastId.equals("-1")) {
-            result = requests;
-        } else {
-            result = getNext(requests, lastId, request -> request.id);
-        }
-
-        return result;
+        return ApiUtil.getRequests(requests, lastId);
     }
 
     @Override
     public List<CsReservation> getReservations(String lastId) {
-        logger.info("Get reservations, lastId: " + lastId);
-
-        List<CsReservation> result;
-        if (Objects.isNull(lastId) || lastId.isEmpty() || lastId.equals("-1")) {
-            result = reservations;
-        } else {
-            result = getNext(reservations, lastId, reservation -> reservation.id);
-        }
-
-        return result;
+        return ApiUtil.getReservations(reservations, lastId);
     }
 
     @Override
     public void updateReservation(String id, CsReservation.Operation op) {
-        logger.info("Update reservation: " + id + ". Operation: " + op);
-
-        OptionalInt rIndex = indexOf(reservations, id, r -> r.id);
-        if (!rIndex.isPresent()) {
-            logger.info("No reservation with id: " + id);
-            return;
-        }
-        CsReservation reservation = reservations.get(rIndex.getAsInt());
-
-        Reservation res = Reservation.newBuilder()
-                .setId(reservation.id)
-                .setOffer(reservation.offerId)
-                .setRequest(reservation.requestId)
-                .build();
-
-        ReservationAction reservationAction = ReservationAction.newBuilder()
-                .setReservation(res)
-                .setAction(op == CsReservation.Operation.ACCEPT ? Action.ACCEPT : Action.REJECT)
-                .build();
-
-        String address = addressesByRequest.get(reservation.requestId);
-        Message message = Message.newBuilder().setReservationAction(reservationAction).build();
-        zmqHandler.handle(new MetaMessage(address, message));
-
-        if (CsReservation.Operation.ACCEPT == op) {
-            reservation.status = CsReservation.Status.ACCEPTED;
-
-            ReservationPaymentOption paymentOption = ReservationPaymentOption.newBuilder()
-                    .setReservation(res).addAllOptions(paymentOptions).build();
-            Message m = Message.newBuilder().setPaymentOptions(paymentOption).build();
-            zmqHandler.handle(new MetaMessage(address, m));
-        } else {
-            reservation.status = CsReservation.Status.REJECTED;
-        }
+        ApiUtil.updateReservation(reservations, addressesByRequest, zmqHandler, paymentOptions, id, op);
     }
 
     @Override
     public CsOffer submitOffer(String requestId, CsOffer offer) {
-        // in order to alter hash
-        offer.time = offer.time.plusNanos(new Random().nextInt(250));
-        int hash = Objects.hash(offer.time, offer.price, offer.energy, offer.window, offer.date);
-
-        // encode name in id
-        offer.id = name + "-" + Objects.toString(Math.abs(hash)).substring(0, 6);
-        logger.info("New offer: " + offer);
-
-        List<CsOffer> offers = offersByRequest.get(requestId);
-        if (Objects.isNull(offers))
-            offersByRequest.put(requestId, offers = new CopyOnWriteArrayList<>());
-        offers.add(offer);
-
-        LocalDateTime dateTime = LocalDateTime.of(offer.date, offer.time);
-        ZoneId systemZone = ZoneId.systemDefault();
-        ZoneOffset offset = systemZone.getRules().getOffset(dateTime);
-        Instant instant = dateTime.toInstant(offset);
-        Timestamp ts = Timestamp.newBuilder().setSeconds(instant.getEpochSecond()).setNanos(instant.getNano()).build();
-        Offer offer1 = Offer.newBuilder()
-                .setSource(endpoint)
-                .setRequestId(requestId)
-                .setId(offer.id)
-                .setEnergy(offer.energy)
-                .setPrice(offer.price)
-                .setDate(ts)
-                .setWindow(offer.window)
-                .build();
-
-        Message message = Message.newBuilder().setOffer(offer1).build();
-
-        String tag = tagsByRequest.get(requestId);
-        handler.handle(new MetaMessage(tag, message));
-
-        return offer;
+        return ApiUtil.submitOffer(offersByRequest, name, handler, endpoint, tagsByRequest, requestId, offer);
     }
 
     @Override
     public List<CsOffer> getOffers(String requestId, String lastId) {
-        logger.info("Offers for requestId=" + requestId + ", lastId=" + lastId);
-        List<CsOffer> offers = offersByRequest.get(requestId);
-
-        if (Objects.isNull(offers))
-            offersByRequest.put(requestId, (offers = new CopyOnWriteArrayList<>()));
-
-        List<CsOffer> next = getNext(offers, lastId, offer -> offer.id);
-        logger.info("Returned offers: " + next.size());
-        return next;
+        return ApiUtil.getOffers(offersByRequest, requestId, lastId);
     }
 
     @Override
