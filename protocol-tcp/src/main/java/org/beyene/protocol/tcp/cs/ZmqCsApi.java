@@ -66,6 +66,8 @@ class ZmqCsApi implements CsApi, MessageHandler {
     }
 
     private void initialize() {
+        logger.info("Initializing ZMQ CS backend...");
+
         this.context = new ZContext();
         this.poller = context.createPoller(1);
 
@@ -147,7 +149,7 @@ class ZmqCsApi implements CsApi, MessageHandler {
     }
 
     private void handleReservationAction(String addressee, ReservationAction reservationAction) {
-        HandlerUtil.handleReservationAction(reservations, addressee, reservationAction);
+        HandlerUtil.handleReservationActionCs(reservations, addressee, reservationAction);
     }
 
     @Override
@@ -157,12 +159,12 @@ class ZmqCsApi implements CsApi, MessageHandler {
 
     @Override
     public List<CsReservation> getReservations(String lastId) {
-        return ApiUtil.getReservations(reservations, lastId);
+        return ApiUtil.getCsReservations(reservations, lastId);
     }
 
     @Override
     public void updateReservation(String id, CsReservation.Operation op) {
-        ApiUtil.updateReservation(reservations, addressesByRequest, handler, paymentOptions, id, op);
+        ApiUtil.updateCsReservation(reservations, addressesByRequest, handler, paymentOptions, id, op);
     }
 
     @Override

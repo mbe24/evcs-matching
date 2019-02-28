@@ -6,6 +6,7 @@ import org.apache.commons.logging.LogFactory;
 import org.beyene.protocol.api.data.CsOffer;
 import org.beyene.protocol.api.data.CsReservation;
 import org.beyene.protocol.api.data.EvRequest;
+import org.beyene.protocol.api.data.EvReservation;
 import org.beyene.protocol.common.dto.*;
 import org.beyene.protocol.common.io.MessageHandler;
 import org.beyene.protocol.common.io.MetaMessage;
@@ -16,8 +17,10 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Function;
 
 import static org.beyene.protocol.common.util.Data.getNext;
+import static org.beyene.protocol.common.util.Data.indexOf;
 
 public final class ApiUtil {
 
@@ -25,6 +28,38 @@ public final class ApiUtil {
 
     private ApiUtil() {
         throw new AssertionError("no instances allowed");
+    }
+
+    public static Message responseForSubmitRequest(List<EvRequest> requests,
+                                                      String name,
+                                                      EvRequest request,
+                                                      String source) {
+        // in order to alter hash
+        request.time = request.time.plusNanos(new Random().nextInt(250));
+        int hash = Objects.hash(request.time, request.energy, request.date, request.window);
+
+        // encode name in id
+        request.id = name + "-" + Objects.toString(Math.abs(hash)).substring(0, 6);
+        logger.info("New request: " + request);
+
+        requests.add(request);
+
+        LocalDateTime dateTime = LocalDateTime.of(request.date, request.time);
+        ZoneId systemZone = ZoneId.systemDefault();
+        ZoneOffset offset = systemZone.getRules().getOffset(dateTime);
+        Instant instant = dateTime.toInstant(offset);
+        Timestamp ts = Timestamp.newBuilder().setSeconds(instant.getEpochSecond()).setNanos(instant.getNano()).build();
+
+        Request r = Request.newBuilder()
+                .setSource(source)
+                .setId(request.id)
+                .setEnergy(request.energy)
+                .setDate(ts)
+                .setWindow(request.window)
+                .build();
+
+        Message message = Message.newBuilder().setRequest(r).build();
+        return message;
     }
 
     public static List<EvRequest> getRequests(List<EvRequest> requests, String lastId) {
@@ -83,7 +118,9 @@ public final class ApiUtil {
         return offer;
     }
 
-    public static List<CsOffer> getOffers(Map<String, List<CsOffer>> offersByRequest, String requestId, String lastId) {
+    public static List<CsOffer> getOffers(Map<String, List<CsOffer>> offersByRequest,
+                                          String requestId,
+                                          String lastId) {
         logger.info("Offers for requestId=" + requestId + ", lastId=" + lastId);
 
         List<CsOffer> offers = offersByRequest.get(requestId);
@@ -96,25 +133,100 @@ public final class ApiUtil {
         return next;
     }
 
-    public static List<CsReservation> getReservations(List<CsReservation> reservations, String lastId) {
+    public static void makeReservation(Map<String, List<CsOffer>> offersByRequest,
+                                       Map<String, String> addressesByOffer,
+                                       String name,
+                                       MessageHandler handler,
+                                       String offerId,
+                                       String requestId) {
+        logger.info("Reservation for offer: " + offerId);
+
+        List<CsOffer> offers = offersByRequest.get(requestId);
+
+        if (Objects.isNull(offers))
+            offersByRequest.put(requestId, offers = new CopyOnWriteArrayList<>());
+
+        OptionalInt oIndex = indexOf(offers, offerId, o -> o.id);
+        if (!oIndex.isPresent()) {
+            logger.info("No offer with id: " + offerId);
+            throw new IllegalArgumentException("there is no offer with id: " + offerId);
+        }
+
+        CsOffer offer = offers.get(oIndex.getAsInt());
+        offer.reserved = true;
+
+        Reservation reservation = Reservation.newBuilder()
+                .setSource(name)
+                .setOffer(offerId)
+                .setRequest(requestId).build();
+        Message message = Message.newBuilder().setReservation(reservation).build();
+
+        String address = addressesByOffer.get(offerId);
+        handler.handle(new MetaMessage(address, message));
+    }
+
+    public static List<CsReservation> getCsReservations(List<CsReservation> reservations, String lastId) {
+        return getReservations(reservations, lastId, reservation -> reservation.id);
+    }
+
+    public static List<EvReservation> getEvReservations(List<EvReservation> reservations, String lastId) {
+        return getReservations(reservations, lastId, reservation -> reservation.id);
+    }
+
+    private static <T> List<T> getReservations(List<T> reservations, String lastId, Function<T, String> toKey) {
         logger.info("Get reservations, lastId: " + lastId);
 
-        List<CsReservation> result;
+        List<T> result;
         if (Objects.isNull(lastId) || lastId.isEmpty() || lastId.equals("-1")) {
             result = reservations;
         } else {
-            result = Data.getNext(reservations, lastId, reservation -> reservation.id);
+            result = Data.getNext(reservations, lastId, toKey);
         }
 
         return result;
     }
 
-    public static void updateReservation(List<CsReservation> reservations,
-                                         Map<String, String> addressesByRequest,
-                                         MessageHandler handler,
-                                         List<String> paymentOptions,
-                                         String id,
-                                         CsReservation.Operation op) {
+    public static EvReservation updateEvReservation(List<EvReservation> reservations,
+                                                    Map<String, String> addressesByOffer,
+                                                    MessageHandler handler,
+                                                    String id,
+                                                    String option) {
+        logger.info("Paying for reservation: " + id + "[" + option + "]");
+
+        OptionalInt rIndex = indexOf(reservations, id, r -> r.id);
+        if (!rIndex.isPresent()) {
+            logger.info("No reservation with id: " + id);
+            throw new IllegalArgumentException("there is no reservation with id: " + id);
+        }
+
+        EvReservation r = reservations.get(rIndex.getAsInt());
+        r.status = CsReservation.Status.PAID;
+        r.payment = option;
+
+        Reservation reservation = Reservation.newBuilder()
+                .setId(r.id)
+                .setOffer(r.offerId)
+                .setRequest(r.requestId)
+                .build();
+
+        Message message = Message.newBuilder()
+                .setReservationAction(ReservationAction.newBuilder()
+                        .setReservation(reservation)
+                        .setAction(Action.PAY)
+                        .setArgument(option))
+                .build();
+        String address = addressesByOffer.get(r.offerId);
+        handler.handle(new MetaMessage(address, message));
+
+        return r;
+    }
+
+    public static void updateCsReservation(List<CsReservation> reservations,
+                                           Map<String, String> addressesByRequest,
+                                           MessageHandler handler,
+                                           List<String> paymentOptions,
+                                           String id,
+                                           CsReservation.Operation op) {
         logger.info("Update reservation: " + id + ". Operation: " + op);
 
         OptionalInt rIndex = Data.indexOf(reservations, id, r -> r.id);

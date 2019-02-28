@@ -6,6 +6,7 @@ import org.apache.commons.logging.LogFactory;
 import org.beyene.protocol.api.data.CsOffer;
 import org.beyene.protocol.api.data.CsReservation;
 import org.beyene.protocol.api.data.EvRequest;
+import org.beyene.protocol.api.data.EvReservation;
 import org.beyene.protocol.common.dto.Action;
 import org.beyene.protocol.common.dto.Request;
 import org.beyene.protocol.common.dto.Reservation;
@@ -79,9 +80,9 @@ public final class HandlerUtil {
         reservations.add(csReservation);
     }
 
-    public static void handleReservationAction(List<CsReservation> reservations,
-                                               String addressee,
-                                               ReservationAction reservationAction) {
+    public static void handleReservationActionCs(List<CsReservation> reservations,
+                                                 String addressee,
+                                                 ReservationAction reservationAction) {
         Reservation reservation = reservationAction.getReservation();
 
         if (Action.PAY != reservationAction.getAction())
@@ -98,6 +99,56 @@ public final class HandlerUtil {
         CsReservation csReservation = reservations.get(rIndex.getAsInt());
         csReservation.status = CsReservation.Status.PAID;
         csReservation.payment = reservationAction.getArgument();
+    }
+
+    public static void handleReservationAction(List<EvRequest> requests,
+                                               List<EvReservation> reservations,
+                                               Map<String, List<CsOffer>> offersByRequest,
+                                               List<EvReservation> awaitingPayment,
+                                               String addressee,
+                                               ReservationAction reservationAction) {
+        logger.info("Handling reservation action");
+
+        Reservation reservation = reservationAction.getReservation();
+        String requestId = reservation.getRequest();
+        String offerId = reservation.getOffer();
+
+        OptionalInt rIndex = Data.indexOf(requests, requestId, r -> r.id);
+        if (!rIndex.isPresent()) {
+            throw new IllegalStateException("no request with id: " + requestId);
+        }
+        List<CsOffer> offers = offersByRequest.get(requestId);
+
+        OptionalInt oIndex = Data.indexOf(offers, offerId, o -> o.id);
+        if (!oIndex.isPresent()) {
+            throw new IllegalStateException("no offer with id: " + offerId);
+        }
+
+        CsOffer offer = offers.get(oIndex.getAsInt());
+        EvReservation evReservation = new EvReservation();
+        evReservation.id = reservation.getId();
+        evReservation.offerId = offer.id;
+        evReservation.requestId = requestId;
+
+        Action action = reservationAction.getAction();
+        CsReservation.Status status;
+        if (Action.ACCEPT == action)
+            status = CsReservation.Status.ACCEPTED;
+        else if (Action.REJECT == action)
+            status = CsReservation.Status.REJECTED;
+        else {
+            status = CsReservation.Status.REJECTED;
+            logger.info("Action was not expected: " + action);
+        }
+
+        evReservation.status = status;
+        evReservation.price = offer.price;
+        if (CsReservation.Status.REJECTED == status) {
+            reservations.add(evReservation);
+            return;
+        }
+
+        awaitingPayment.add(evReservation);
     }
 
 }

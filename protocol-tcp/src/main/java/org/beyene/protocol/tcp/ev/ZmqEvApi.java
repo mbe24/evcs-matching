@@ -5,14 +5,14 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.beyene.protocol.api.EvApi;
 import org.beyene.protocol.api.data.CsOffer;
-import org.beyene.protocol.api.data.CsReservation;
 import org.beyene.protocol.api.data.EvRequest;
 import org.beyene.protocol.api.data.EvReservation;
 import org.beyene.protocol.common.dto.*;
-import org.beyene.protocol.common.io.ZmqClient;
-import org.beyene.protocol.common.util.Data;
 import org.beyene.protocol.common.io.MessageHandler;
 import org.beyene.protocol.common.io.MetaMessage;
+import org.beyene.protocol.common.io.ZmqClient;
+import org.beyene.protocol.common.util.ApiUtil;
+import org.beyene.protocol.common.util.HandlerUtil;
 import org.beyene.protocol.common.util.Util;
 import org.zeromq.ZContext;
 
@@ -59,11 +59,13 @@ class ZmqEvApi implements EvApi, MessageHandler {
             initialize();
         } else {
             clearUserdata();
-            new Timer().schedule(Util.toTimerTask(() ->  initialize()), 1_000);
+            new Timer().schedule(Util.toTimerTask(() -> initialize()), 1_000);
         }
     }
 
     private void initialize() {
+        logger.info("Initializing ZMQ EV backend...");
+
         this.context = new ZContext();
         this.zmqIo = new ZmqClient(context, this);
         this.executor = Executors.newSingleThreadExecutor();
@@ -137,48 +139,8 @@ class ZmqEvApi implements EvApi, MessageHandler {
     }
 
     private void handleReservationAction(String addressee, ReservationAction reservationAction) {
-        logger.info("Handling reservation action");
-
-        Reservation reservation = reservationAction.getReservation();
-        String requestId = reservation.getRequest();
-        String offerId = reservation.getOffer();
-
-        OptionalInt rIndex = Data.indexOf(requests, requestId, r -> r.id);
-        if (!rIndex.isPresent()) {
-            throw new IllegalStateException("no request with id: " + requestId);
-        }
-        List<CsOffer> offers = offersByRequest.get(requestId);
-
-        OptionalInt oIndex = Data.indexOf(offers, offerId, o -> o.id);
-        if (!oIndex.isPresent()) {
-            throw new IllegalStateException("no offer with id: " + offerId);
-        }
-
-        CsOffer offer = offers.get(oIndex.getAsInt());
-        EvReservation evReservation = new EvReservation();
-        evReservation.id = reservation.getId();
-        evReservation.offerId = offer.id;
-        evReservation.requestId = requestId;
-
-        Action action = reservationAction.getAction();
-        CsReservation.Status status;
-        if (Action.ACCEPT == action)
-            status = CsReservation.Status.ACCEPTED;
-        else if (Action.REJECT == action)
-            status = CsReservation.Status.REJECTED;
-        else {
-            status = CsReservation.Status.REJECTED;
-            logger.info("Action was not expected: " + action);
-        }
-
-        evReservation.status = status;
-        evReservation.price = offer.price;
-        if (CsReservation.Status.REJECTED == status) {
-            reservations.add(evReservation);
-            return;
-        }
-
-        awaitingPayment.add(evReservation);
+        HandlerUtil.handleReservationAction(requests, reservations, offersByRequest, awaitingPayment,
+                addressee, reservationAction);
     }
 
     private void handlePaymentOption(String addressee, ReservationPaymentOption paymentOptions) {
@@ -191,94 +153,25 @@ class ZmqEvApi implements EvApi, MessageHandler {
 
     @Override
     public List<EvRequest> getRequests(String lastId) {
-        logger.info("Get requests, lastId: " + lastId);
-
-        List<EvRequest> result;
-        if (Objects.isNull(lastId) || lastId.isEmpty() || lastId.equals("-1")) {
-            result = requests;
-        } else {
-            result = Data.getNext(requests, lastId, request -> request.id);
-        }
-
-        return result;
+        return ApiUtil.getRequests(requests, lastId);
     }
 
     @Override
     public EvRequest submitRequest(EvRequest request) {
-        // in order to alter hash
-        request.time = request.time.plusNanos(new Random().nextInt(250));
-        int hash = Objects.hash(request.time, request.energy, request.date, request.window);
-
-        // encode name in id
-        request.id = name + "-" + Objects.toString(Math.abs(hash)).substring(0, 6);
-        logger.info("New request: " + request);
-
-        requests.add(request);
-
-        LocalDateTime dateTime = LocalDateTime.of(request.date, request.time);
-        ZoneId systemZone = ZoneId.systemDefault();
-        ZoneOffset offset = systemZone.getRules().getOffset(dateTime);
-        Instant instant = dateTime.toInstant(offset);
-        Timestamp ts = Timestamp.newBuilder().setSeconds(instant.getEpochSecond()).setNanos(instant.getNano()).build();
-        Request r = Request.newBuilder()
-                .setSource(name)
-                .setId(request.id)
-                .setEnergy(request.energy)
-                .setDate(ts)
-                .setWindow(request.window)
-                .build();
-
-        Message message = Message.newBuilder().setRequest(r).build();
+        Message message = ApiUtil.responseForSubmitRequest(requests, name, request, name);
         addresses.stream().map(addr -> new MetaMessage(addr, message)).forEach(handler::handle);
-
         return request;
     }
 
     @Override
     public EvReservation updateReservation(String id, String option) {
-        logger.info("Paying for reservation: " + id + "[" + option + "]");
-
-        OptionalInt rIndex = Data.indexOf(reservations, id, r -> r.id);
-        if (!rIndex.isPresent()) {
-            logger.info("No reservation with id: " + id);
-            throw new IllegalArgumentException("there is no reservation with id: " + id);
-        }
-
-        EvReservation r = reservations.get(rIndex.getAsInt());
-        r.status = CsReservation.Status.PAID;
-        r.payment = option;
-
-        Reservation reservation = Reservation.newBuilder()
-                .setId(r.id)
-                .setOffer(r.offerId)
-                .setRequest(r.requestId)
-                .build();
-
-        Message message = Message.newBuilder()
-                .setReservationAction(ReservationAction.newBuilder()
-                        .setReservation(reservation)
-                        .setAction(Action.PAY)
-                        .setArgument(option))
-                .build();
-        String address = addressesByOffer.get(r.offerId);
-        handler.handle(new MetaMessage(address, message));
-
-        return r;
+        return ApiUtil.updateEvReservation(reservations, addressesByOffer, handler, id, option);
     }
 
     @Override
     public List<EvReservation> getReservations(String lastId) {
-        logger.info("Get reservations, lastId: " + lastId);
         addMissingPaymentOptions();
-
-        List<EvReservation> result;
-        if (Objects.isNull(lastId) || lastId.isEmpty() || lastId.equals("-1")) {
-            result = reservations;
-        } else {
-            result = Data.getNext(reservations, lastId, reservation -> reservation.id);
-        }
-
-        return result;
+        return ApiUtil.getEvReservations(reservations, lastId);
     }
 
     private void addMissingPaymentOptions() {
@@ -293,39 +186,12 @@ class ZmqEvApi implements EvApi, MessageHandler {
 
     @Override
     public void makeReservation(String offerId, String requestId) {
-        logger.info("Reservation for offer: " + offerId);
-
-        List<CsOffer> offers = offersByRequest.get(requestId);
-
-        if (Objects.isNull(offers))
-            offersByRequest.put(requestId, offers = new CopyOnWriteArrayList<>());
-
-        OptionalInt oIndex = Data.indexOf(offers, offerId, o -> o.id);
-        if (!oIndex.isPresent()) {
-            logger.info("No offer with id: " + offerId);
-            throw new IllegalArgumentException("there is no offer with id: " + offerId);
-        }
-
-        CsOffer offer = offers.get(oIndex.getAsInt());
-        offer.reserved = true;
-
-        Reservation reservation = Reservation.newBuilder().setOffer(offerId).setRequest(requestId).build();
-        Message message = Message.newBuilder().setReservation(reservation).build();
-        String address = addressesByOffer.get(offerId);
-        handler.handle(new MetaMessage(address, message));
+        ApiUtil.makeReservation(offersByRequest, addressesByOffer, name, handler, offerId, requestId);
     }
 
     @Override
     public List<CsOffer> getOffers(String requestId, String lastId) {
-        logger.info("Offers for requestId=" + requestId + ", lastId=" + lastId);
-        List<CsOffer> offers = offersByRequest.get(requestId);
-
-        if (Objects.isNull(offers))
-            offersByRequest.put(requestId, offers = new CopyOnWriteArrayList<>());
-
-        List<CsOffer> next = Data.getNext(offers, lastId, offer -> offer.id);
-        logger.info("Returned offers: " + next.size());
-        return next;
+        return ApiUtil.getOffers(offersByRequest, requestId, lastId);
     }
 
     @Override

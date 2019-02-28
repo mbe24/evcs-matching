@@ -94,6 +94,8 @@ class IotaCsApi implements CsApi, TransactionListener<Message>, MessageHandler {
     }
 
     private void initialize() {
+        logger.info("Initializing IOTA CS backend...");
+
         this.context = new ZContext();
         this.poller = context.createPoller(1);
         ZMQ.Socket socket = createSocketAndBind(endpoint);
@@ -169,7 +171,8 @@ class IotaCsApi implements CsApi, TransactionListener<Message>, MessageHandler {
     }
 
     private void handleRequest(String addressee, Request request) {
-        HandlerUtil.handleRequest(requests, addressesByRequest, addressee, request);
+        String tag = request.getSource();
+        HandlerUtil.handleRequest(requests, tagsByRequest, tag, request);
 
         // each request has tag, where related offers are posted
         followNewTag(request.getSource());
@@ -222,12 +225,11 @@ class IotaCsApi implements CsApi, TransactionListener<Message>, MessageHandler {
 
         // save ZMQ endpoint address
         String requestId = reservation.getRequest();
-        String address = reservation.getSource();
-        addressesByRequest.put(requestId, address);
+        addressesByRequest.put(requestId, addressee);
     }
 
     private void handleReservationAction(String addressee, ReservationAction reservationAction) {
-        HandlerUtil.handleReservationAction(reservations, addressee, reservationAction);
+        HandlerUtil.handleReservationActionCs(reservations, addressee, reservationAction);
     }
 
     @Override
@@ -237,12 +239,12 @@ class IotaCsApi implements CsApi, TransactionListener<Message>, MessageHandler {
 
     @Override
     public List<CsReservation> getReservations(String lastId) {
-        return ApiUtil.getReservations(reservations, lastId);
+        return ApiUtil.getCsReservations(reservations, lastId);
     }
 
     @Override
     public void updateReservation(String id, CsReservation.Operation op) {
-        ApiUtil.updateReservation(reservations, addressesByRequest, zmqHandler, paymentOptions, id, op);
+        ApiUtil.updateCsReservation(reservations, addressesByRequest, zmqHandler, paymentOptions, id, op);
     }
 
     @Override

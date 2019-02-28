@@ -80,12 +80,13 @@ public class ZmqServer implements Callable<Void>, MessageHandler, Closeable {
             try {
                 poller.poll(10);
             } catch (Exception e) {
-                logger.info("Exit=" + e);
                 if (ClosedByInterruptException.class.isInstance(e.getCause())) {
                     logger.info("Exiting due to interruption");
                     break;
-                } else
+                } else {
+                    logger.info("Error=" + e);
                     throw e;
+                }
             }
 
             if (poller.pollin(0)) {

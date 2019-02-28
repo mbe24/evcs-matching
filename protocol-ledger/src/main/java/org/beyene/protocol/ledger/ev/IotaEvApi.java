@@ -7,19 +7,18 @@ import org.beyene.ledger.api.*;
 import org.beyene.ledger.iota.IotaLedgerProvider;
 import org.beyene.protocol.api.EvApi;
 import org.beyene.protocol.api.data.CsOffer;
-import org.beyene.protocol.api.data.CsReservation;
 import org.beyene.protocol.api.data.EvRequest;
 import org.beyene.protocol.api.data.EvReservation;
 import org.beyene.protocol.common.dto.*;
 import org.beyene.protocol.common.io.MessageHandler;
 import org.beyene.protocol.common.io.MetaMessage;
 import org.beyene.protocol.common.io.ZmqClient;
+import org.beyene.protocol.common.util.ApiUtil;
+import org.beyene.protocol.common.util.HandlerUtil;
+import org.beyene.protocol.common.util.Util;
 import org.beyene.protocol.ledger.util.JsonMessageMapper;
 import org.beyene.protocol.ledger.util.LedgerToMessagHandlerAdapter;
-import org.beyene.protocol.common.util.Util;
-import org.zeromq.SocketType;
 import org.zeromq.ZContext;
-import org.zeromq.ZMQ;
 
 import java.io.IOException;
 import java.time.*;
@@ -31,9 +30,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import static org.beyene.protocol.common.util.Data.getNext;
-import static org.beyene.protocol.common.util.Data.indexOf;
-
 class IotaEvApi implements EvApi, TransactionListener<Message>, MessageHandler {
 
     private static final Log logger = LogFactory.getLog(IotaEvApi.class);
@@ -41,7 +37,7 @@ class IotaEvApi implements EvApi, TransactionListener<Message>, MessageHandler {
     private final String name;
     private final String tag;
 
-    private  ZContext context;
+    private ZContext context;
     private MessageHandler zmqHandler;
     private ZmqClient zmqIo;
     private ExecutorService executor;
@@ -72,7 +68,7 @@ class IotaEvApi implements EvApi, TransactionListener<Message>, MessageHandler {
             initialize();
         } else {
             clearUserdata();
-            new Timer().schedule(Util.toTimerTask(() ->  initialize()), 1_000);
+            new Timer().schedule(Util.toTimerTask(() -> initialize()), 1_000);
         }
     }
 
@@ -95,10 +91,6 @@ class IotaEvApi implements EvApi, TransactionListener<Message>, MessageHandler {
     }
 
     private void clearUserdata() {
-        logger.info("Reinitializing IOTA EV backend...");
-
-        zmqIo.clear();
-
         requests.clear();
         offersByRequest.clear();
         addressesByOffer.clear();
@@ -166,57 +158,9 @@ class IotaEvApi implements EvApi, TransactionListener<Message>, MessageHandler {
         addressesByOffer.put(csOffer.id, address);
     }
 
-    private ZMQ.Socket createSocketAndConnect(String addr) {
-        ZMQ.Socket socket = context.createSocket(SocketType.DEALER);
-        socket.setIdentity(name.getBytes(ZMQ.CHARSET));
-        socket.connect(addr);
-        logger.info("Trying to connect to: " + addr);
-        return socket;
-    }
-
     private void handleReservationAction(String addressee, ReservationAction reservationAction) {
-        logger.info("Handling reservation action");
-
-        Reservation reservation = reservationAction.getReservation();
-        String requestId = reservation.getRequest();
-        String offerId = reservation.getOffer();
-
-        OptionalInt rIndex = indexOf(requests, requestId, r -> r.id);
-        if (!rIndex.isPresent()) {
-            throw new IllegalStateException("no request with id: " + requestId);
-        }
-        List<CsOffer> offers = offersByRequest.get(requestId);
-
-        OptionalInt oIndex = indexOf(offers, offerId, o -> o.id);
-        if (!oIndex.isPresent()) {
-            throw new IllegalStateException("no offer with id: " + offerId);
-        }
-
-        CsOffer offer = offers.get(oIndex.getAsInt());
-        EvReservation evReservation = new EvReservation();
-        evReservation.id = reservation.getId();
-        evReservation.offerId = offer.id;
-        evReservation.requestId = requestId;
-
-        Action action = reservationAction.getAction();
-        CsReservation.Status status;
-        if (Action.ACCEPT == action)
-            status = CsReservation.Status.ACCEPTED;
-        else if (Action.REJECT == action)
-            status = CsReservation.Status.REJECTED;
-        else {
-            status = CsReservation.Status.REJECTED;
-            logger.info("Action was not expected: " + action);
-        }
-
-        evReservation.status = status;
-        evReservation.price = offer.price;
-        if (CsReservation.Status.REJECTED == status) {
-            reservations.add(evReservation);
-            return;
-        }
-
-        awaitingPayment.add(evReservation);
+        HandlerUtil.handleReservationAction(requests, reservations, offersByRequest, awaitingPayment,
+                addressee, reservationAction);
     }
 
     private void handlePaymentOption(String addressee, ReservationPaymentOption paymentOptions) {
@@ -229,49 +173,18 @@ class IotaEvApi implements EvApi, TransactionListener<Message>, MessageHandler {
 
     @Override
     public List<EvRequest> getRequests(String lastId) {
-        logger.info("Get requests, lastId: " + lastId);
-
-        List<EvRequest> result;
-        if (Objects.isNull(lastId) || lastId.isEmpty() || lastId.equals("-1")) {
-            result = requests;
-        } else {
-            result = getNext(requests, lastId, request -> request.id);
-        }
-
-        return result;
+        return ApiUtil.getRequests(requests, lastId);
     }
 
     @Override
     public EvRequest submitRequest(EvRequest request) {
-        // in order to alter hash
-        request.time = request.time.plusNanos(new Random().nextInt(250));
-        int hash = Objects.hash(request.time, request.energy, request.date, request.window);
-
-        // encode name in id
-        request.id = name + "-" + Objects.toString(Math.abs(hash)).substring(0, 6);
-        logger.info("New request: " + request);
-
-        requests.add(request);
-
         String requestTag = tag + "9" + Util.generateString(6);
+        Message message = ApiUtil.responseForSubmitRequest(requests, name, request, requestTag);
+        MetaMessage m = new MetaMessage(tag, message);
+        handler.handle(m);
+
         followNewTag(requestTag);
-
-        LocalDateTime dateTime = LocalDateTime.of(request.date, request.time);
-        ZoneId systemZone = ZoneId.systemDefault();
-        ZoneOffset offset = systemZone.getRules().getOffset(dateTime);
-        Instant instant = dateTime.toInstant(offset);
-        Timestamp ts = Timestamp.newBuilder().setSeconds(instant.getEpochSecond()).setNanos(instant.getNano()).build();
-        Request r = Request.newBuilder()
-                .setSource(requestTag)
-                .setId(request.id)
-                .setEnergy(request.energy)
-                .setDate(ts)
-                .setWindow(request.window)
-                .build();
-
-        Message message = Message.newBuilder().setRequest(r).build();
-        handler.handle(new MetaMessage(tag, message));
-        return null;
+        return request;
     }
 
     private void followNewTag(String tag) {
@@ -281,49 +194,13 @@ class IotaEvApi implements EvApi, TransactionListener<Message>, MessageHandler {
 
     @Override
     public EvReservation updateReservation(String id, String option) {
-        logger.info("Paying for reservation: " + id + "[" + option + "]");
-
-        OptionalInt rIndex = indexOf(reservations, id, r -> r.id);
-        if (!rIndex.isPresent()) {
-            logger.info("No reservation with id: " + id);
-            throw new IllegalArgumentException("there is no reservation with id: " + id);
-        }
-
-        EvReservation r = reservations.get(rIndex.getAsInt());
-        r.status = CsReservation.Status.PAID;
-        r.payment = option;
-
-        Reservation reservation = Reservation.newBuilder()
-                .setId(r.id)
-                .setOffer(r.offerId)
-                .setRequest(r.requestId)
-                .build();
-
-        Message message = Message.newBuilder()
-                .setReservationAction(ReservationAction.newBuilder()
-                        .setReservation(reservation)
-                        .setAction(Action.PAY)
-                        .setArgument(option))
-                .build();
-        String address = addressesByOffer.get(r.offerId);
-        zmqHandler.handle(new MetaMessage(address, message));
-
-        return r;
+        return ApiUtil.updateEvReservation(reservations, addressesByOffer, zmqHandler, id, option);
     }
 
     @Override
     public List<EvReservation> getReservations(String lastId) {
-        logger.info("Get reservations, lastId: " + lastId);
         addMissingPaymentOptions();
-
-        List<EvReservation> result;
-        if (Objects.isNull(lastId) || lastId.isEmpty() || lastId.equals("-1")) {
-            result = reservations;
-        } else {
-            result = getNext(reservations, lastId, reservation -> reservation.id);
-        }
-
-        return result;
+        return ApiUtil.getEvReservations(reservations, lastId);
     }
 
     private void addMissingPaymentOptions() {
@@ -338,53 +215,29 @@ class IotaEvApi implements EvApi, TransactionListener<Message>, MessageHandler {
 
     @Override
     public void makeReservation(String offerId, String requestId) {
-        logger.info("Reservation for offer: " + offerId);
-
-        List<CsOffer> offers = offersByRequest.get(requestId);
-
-        if (Objects.isNull(offers))
-            offersByRequest.put(requestId, offers = new CopyOnWriteArrayList<>());
-
-        OptionalInt oIndex = indexOf(offers, offerId, o -> o.id);
-        if (!oIndex.isPresent()) {
-            logger.info("No offer with id: " + offerId);
-            throw new IllegalArgumentException("there is no offer with id: " + offerId);
-        }
-
-        CsOffer offer = offers.get(oIndex.getAsInt());
-        offer.reserved = true;
-
-        Reservation reservation = Reservation.newBuilder()
-                .setSource(name)
-                .setOffer(offerId)
-                .setRequest(requestId).build();
-        Message message = Message.newBuilder().setReservation(reservation).build();
-
-        String address = addressesByOffer.get(offerId);
-        zmqHandler.handle(new MetaMessage(address, message));
+        ApiUtil.makeReservation(offersByRequest, addressesByOffer, name, zmqHandler, offerId, requestId);
     }
 
     @Override
     public List<CsOffer> getOffers(String requestId, String lastId) {
-        logger.info("Offers for requestId=" + requestId + ", lastId=" + lastId);
-        List<CsOffer> offers = offersByRequest.get(requestId);
-
-        if (Objects.isNull(offers))
-            offersByRequest.put(requestId, offers = new CopyOnWriteArrayList<>());
-
-        List<CsOffer> next = getNext(offers, lastId, offer -> offer.id);
-        logger.info("Returned offers: " + next.size());
-        return next;
+        return ApiUtil.getOffers(offersByRequest, requestId, lastId);
     }
 
     @Override
     public void close() throws IOException {
-        ledger.close();
-        handler.close();
+        try {
+            ledger.close();
+            handler.close();
 
-        if (Objects.nonNull(zmqIo))
-            zmqIo.close();
+            if (Objects.nonNull(zmqIo))
+                zmqIo.close();
 
-        executor.shutdownNow();
+            executor.shutdownNow();
+
+        } catch (Exception e) {
+            logger.info("Error on close", e);
+            throw e;
+        }
     }
+
 }

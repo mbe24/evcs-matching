@@ -11,7 +11,9 @@ import org.zeromq.ZMQ;
 import org.zeromq.ZMsg;
 
 import java.io.Closeable;
+import java.nio.channels.ClosedByInterruptException;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,18 +38,8 @@ public class ZmqClient implements Callable<Void>, MessageHandler, Closeable {
     public ZmqClient(ZContext context, MessageHandler handler) {
         this.context = context;
         // poller gets grows, if size limit is reached
-        this.poller = context.createPoller(5);
+        this.poller = context.createPoller(0);
         this.handler = handler;
-    }
-
-    public void clear() {
-        for (int socketIndex = 0; socketIndex < poller.getSize(); socketIndex++) {
-            ZMQ.Socket socket = poller.getSocket(socketIndex);
-            poller.unregister(socket);
-        }
-
-        sockets.clear();
-        socketsReverse.clear();
     }
 
     public boolean hasAddress(String address) {
@@ -86,7 +78,8 @@ public class ZmqClient implements Callable<Void>, MessageHandler, Closeable {
         // https://github.com/zeromq/jeromq/issues/489 -- release network resources, necessary for restart
         for (int socketIndex = 0; socketIndex < poller.getSize(); socketIndex++) {
             ZMQ.Socket socket = poller.getSocket(socketIndex);
-            socket.disconnect(socketsReverse.get(socketIndex));
+            if (Objects.nonNull(socket))
+                socket.disconnect(socketsReverse.get(socketIndex));
         }
     }
 
@@ -127,7 +120,17 @@ public class ZmqClient implements Callable<Void>, MessageHandler, Closeable {
                 logger.debug("Sent=" + json);
             }
 
-            poller.poll(10);
+            try {
+                poller.poll(10);
+            } catch (Exception e) {
+                if (ClosedByInterruptException.class.isInstance(e.getCause())) {
+                    logger.info("Exiting due to interruption");
+                    break;
+                } else {
+                    logger.info("Error=" + e);
+                    throw e;
+                }
+            }
 
             for (int socketIndex = 0; socketIndex < poller.getSize(); socketIndex++) {
                 if (poller.pollin(socketIndex)) {
