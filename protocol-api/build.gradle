@@ -1,6 +1,5 @@
 description = 'protocol-api'
 
 dependencies {
-    compile project(':protocol-common')
     testCompile group: 'junit', name: 'junit', version:'4.11'
 }
