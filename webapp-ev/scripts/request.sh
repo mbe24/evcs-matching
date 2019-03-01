@@ -1,9 +1,9 @@
 #!/bin/bash
-# Helper script that create a ev request.
+# Helper script that creates an EV request.
 # Use like ./request.sh <energy> <date> <time> <duration>
 # E.g.: ./request.sh 99.9 2019-01-16 23:00 5
 
-URL=http://localhost:8080/app/api/v1/request/create
+URL=http://localhost:8000/app/api/v1/request/create
 
 ARG_1=$1
 ARG_2=$2
