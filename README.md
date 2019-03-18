@@ -38,7 +38,7 @@ $ ../gradlew bootRun --args='zmq --endpoint=tcp://*:5555'
 again, alternatively, without Gradle
 
 ```sh
-$ java -jar webapp-ev.jar zmq zmq --endpoint=tcp://*:5555
+$ java -jar webapp-ev.jar zmq --endpoint=tcp://*:5555
 ```
 
 Visit <http://localhost:8000> to view the CS control page.
