@@ -41,7 +41,7 @@ again, alternatively, without Gradle
 $ java -jar webapp-ev.jar zmq --endpoint=tcp://*:5555
 ```
 
-Visit <http://localhost:8000> to view the CS control page.
+Visit <http://localhost:8000> to view the EV control page.
 
 Two actuator endpoints for shutdown and restart are enabled and provided under the root context path, i.e. `/shutdown` and `/restart`
 Use it like
